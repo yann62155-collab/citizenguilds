@@ -2,9 +2,12 @@
 
 Mod de gestion des guildes pour **Minecraft Java 1.21.1**, **NeoForge 21.1.215** et **Java 21**.
 
+## Dépendance
+- **Hibou Postal (`hiboupostal`) est requis** sur le serveur et les clients pour le recrutement par numéro de hibou.
+
 ## Fonctionnalites
 - Donnees de guilde sauvegardees dans le monde : membres, grades, invitations, réserve de ressources et journal.
-- Creation, invitation, acceptation, depart, exclusion et promotion.
+- Recrutement par numéro de hibou CitizenHibou (UUID vérifié dans le registre du mod), acceptation/refus, départ, exclusion et promotion.
 - **Réserve de ressources** partagée : dépôt de l'objet tenu en main et retrait par emplacement.
 - Permissions : chef/officier pour gérer la réserve et retirer; tous les membres peuvent déposer.
 - **Pierre de Jade** : minerai de craft obtenu comme butin dans les coffres de donjons, fondu en lingots. Ce n'est jamais une monnaie et n'a aucune valeur de paiement.
@@ -23,7 +26,8 @@ Le minerai ne se génère pas dans le monde et ne se mine pas. Fondez-le dans un
 
 ## Commandes de guilde
 - `/guild create <nom>`
-- `/guild invite <joueur>` puis `/guild accept`
+- `/guild invite <numero_hibou> (numéro du registre CitizenHibou)` puis `/guild accept
+| `/guild refuse` | Refuse une invitation de guilde |`
 - `/guild list` et `/guild info`
 - `/guild rename \"Nouveau nom\"`
 - `/guild deposit` et `/guild withdraw <emplacement> [quantite]` pour la réserve de ressources
