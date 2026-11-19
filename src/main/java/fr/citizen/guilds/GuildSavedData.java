@@ -15,7 +15,6 @@ public final class GuildSavedData extends SavedData {
     private final Map<String, Guild> guilds = new LinkedHashMap<>();
     private final Map<String, String> membership = new HashMap<>();
     private final Map<String, String> invitations = new HashMap<>();
-    private String jadeItemId = "";
 
     public static GuildSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -24,7 +23,6 @@ public final class GuildSavedData extends SavedData {
 
     public static GuildSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         GuildSavedData data = new GuildSavedData();
-        data.jadeItemId = tag.getString("jadeItemId");
         ListTag list = tag.getList("guilds", CompoundTag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
@@ -41,7 +39,6 @@ public final class GuildSavedData extends SavedData {
     }
 
     @Override public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
-        tag.putString("jadeItemId", jadeItemId);
         ListTag list = new ListTag();
         for (Guild guild : guilds.values()) list.add(guild.save(registries));
         tag.put("guilds", list);
@@ -62,8 +59,6 @@ public final class GuildSavedData extends SavedData {
     }
     public Guild guild(String id) { return guilds.get(id); }
     public Collection<Guild> allGuilds() { return Collections.unmodifiableCollection(guilds.values()); }
-    public String jadeItemId() { return jadeItemId; }
-    public void setJadeItemId(String id) { jadeItemId = id; setDirty(); }
 
     public Guild create(ServerPlayer leader, String name) {
         String uuid = leader.getUUID().toString();
@@ -141,13 +136,6 @@ public final class GuildSavedData extends SavedData {
         guild.log(player.getGameProfile().getName() + " a retire " + amount + "x " + result.getHoverName().getString());
         setDirty(); return result;
     }
-    public boolean addJade(ServerPlayer player, int amount) {
-        Guild guild = guildOf(player);
-        if (guild == null || amount <= 0) return false;
-        guild.jade += amount;
-        guild.log(player.getGameProfile().getName() + " a contribue " + amount + " pierre(s) de Jade");
-        setDirty(); return true;
-    }
     public void disband(ServerPlayer player) {
         Guild guild = guildOf(player);
         if (guild == null || !guild.leader.equals(player.getUUID().toString())) return;
@@ -163,7 +151,6 @@ public final class GuildSavedData extends SavedData {
         public final Map<String, String> roles = new HashMap<>();
         public final List<ItemStack> bank = new ArrayList<>();
         public final List<String> journal = new ArrayList<>();
-        public long jade;
         Guild(String id, String name, String leader, String leaderName) {
             this.id=id; this.name=name; this.leader=leader;
             members.put(leader, leaderName); roles.put(leader, "LEADER");
@@ -178,7 +165,7 @@ public final class GuildSavedData extends SavedData {
         }
         CompoundTag save(HolderLookup.Provider registries) {
             CompoundTag tag=new CompoundTag();
-            tag.putString("id",id); tag.putString("name",name); tag.putString("leader",leader); tag.putLong("jade",jade);
+            tag.putString("id",id); tag.putString("name",name); tag.putString("leader",leader);
             ListTag people=new ListTag();
             members.forEach((uuid, playerName)->{
                 CompoundTag m=new CompoundTag(); m.putString("uuid",uuid); m.putString("name",playerName);
@@ -195,7 +182,7 @@ public final class GuildSavedData extends SavedData {
         static Guild load(CompoundTag tag, HolderLookup.Provider registries) {
             String leader=tag.getString("leader");
             Guild g=new Guild(tag.getString("id"),tag.getString("name"),leader,"");
-            g.members.clear(); g.roles.clear(); g.jade=tag.getLong("jade");
+            g.members.clear(); g.roles.clear();
             ListTag people=tag.getList("members",CompoundTag.TAG_COMPOUND);
             for(int i=0;i<people.size();i++){CompoundTag m=people.getCompound(i);String uuid=m.getString("uuid");g.members.put(uuid,m.getString("name"));g.roles.put(uuid,m.getString("role"));}
             ListTag items=tag.getList("bank",CompoundTag.TAG_COMPOUND);
