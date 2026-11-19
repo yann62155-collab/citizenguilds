@@ -109,6 +109,7 @@ public final class GuildSavedData extends SavedData {
         if (guild == null || !guild.canManage(inviter.getUUID().toString())) return false;
         if (membership.containsKey(target.getUUID().toString())) return false;
         invitations.put(target.getUUID().toString(), guild.id);
+        target.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Guildes] §fTu as recu une invitation pour rejoindre " + guild.name + ". Utilise /guild accept pour la rejoindre."));
         guild.log(inviter.getGameProfile().getName() + " a invite " + target.getGameProfile().getName());
         setDirty();
         return true;
@@ -139,6 +140,7 @@ public final class GuildSavedData extends SavedData {
         String uuid = target.getUUID().toString();
         if (!guild.id.equals(membership.get(uuid))) return false;
         guild.members.remove(uuid); guild.roles.remove(uuid); membership.remove(uuid);
+        target.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c[Guildes] Tu as ete exclu de la guilde " + guild.name + "."));
         guild.log(target.getGameProfile().getName() + " a ete exclu par " + actor.getGameProfile().getName());
         setDirty(); return true;
     }
@@ -149,6 +151,7 @@ public final class GuildSavedData extends SavedData {
         if (!guild.id.equals(membership.get(uuid)) || uuid.equals(guild.leader)) return false;
         String role = guild.roles.getOrDefault(uuid, "MEMBER");
         guild.roles.put(uuid, role.equals("OFFICER") ? "MEMBER" : "OFFICER");
+        target.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Guildes] Ton grade est maintenant : " + guild.roles.get(uuid) + "."));
         guild.log(target.getGameProfile().getName() + " est maintenant " + guild.roles.get(uuid));
         setDirty(); return true;
     }
