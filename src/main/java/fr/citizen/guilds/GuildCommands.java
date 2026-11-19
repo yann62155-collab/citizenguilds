@@ -68,7 +68,7 @@ public final class GuildCommands {
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
                 if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
                 c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal(
-                    "§6[Statistiques] §f"+g.name+" | Membres: "+g.members.size()+" | Objets deposes: "+g.totalDepositedItems+" | Emplacements: "+g.bank.size()+"/54),false);
+                    "§6[Statistiques] §f"+g.name+" | Membres: "+g.members.size()+" | Objets deposes: "+g.totalDepositedItems+" | Emplacements: "+g.bank.size()+"/54"),false);
                 return 1;
             }))
             .then(Commands.literal("top").executes(c -> {
