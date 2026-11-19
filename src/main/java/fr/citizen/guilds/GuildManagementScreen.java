@@ -200,11 +200,10 @@ public final class GuildManagementScreen extends Screen {
         int bank=snapshot.has("bank")?snapshot.getAsJsonArray("bank").size():0;
         int journal=snapshot.has("journal")?snapshot.getAsJsonArray("journal").size():0;
         long deposited=snapshot.has("totalDepositedItems")?snapshot.get("totalDepositedItems").getAsLong():0L;
-        int wins=snapshot.has("dungeonWins")?snapshot.get("dungeonWins").getAsInt():0;
         card(g,a,b+45,142,90,"MEMBRES",Integer.toString(members),"Effectif actuel");
         card(g,a+153,b+45,142,90,"DEPOTS",Long.toString(deposited),"Objets deposes");
-        card(g,a+306,b+45,154,90,"DONJONS",Integer.toString(wins),"Victoires enregistrees");
-        g.drawString(font,"Emplacements occupes dans la reserve : "+bank+"/54 • Journal : "+journal+" entree(s).",a,b+158,MUTED,false);
+        card(g,a+306,b+45,154,90,"RESERVE",Integer.toString(bank)+"/54","Emplacements occupes");
+        g.drawString(font,"Journal : "+journal+" entree(s) conservee(s).",a,b+158,MUTED,false);
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
