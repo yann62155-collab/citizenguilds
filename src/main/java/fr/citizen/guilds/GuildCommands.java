@@ -14,10 +14,20 @@ public final class GuildCommands {
     private GuildCommands() {}
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("guild")
+            .then(Commands.literal("list").executes(c -> {
+                var guilds = GuildSavedData.get(c.getSource().getServer()).allGuilds();
+                c.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§6[Guildes] §fGuildes existantes : " + guilds.size()), false);
+                guilds.forEach(g -> c.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§e" + g.name + " §7(" + g.members.size() + " membre(s))"), false));
+                return 1;
+            }))
             .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.string()).executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 if(GuildSavedData.get(p.getServer()).create(p,StringArgumentType.getString(c,"nom"))==null) return fail(c.getSource(),"Tu appartiens deja a une guilde.");
                 return ok(c.getSource(),"Guilde creee. Tu en es le chef.");
+            })))
+            .then(Commands.literal("rename").then(Commands.argument("nom", StringArgumentType.string()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                return GuildSavedData.get(p.getServer()).rename(p, StringArgumentType.getString(c, "nom")) ? ok(c.getSource(), "Guilde renommee.") : fail(c.getSource(), "Seul le chef peut renommer (3 a 24 caracteres).");
             })))
             .then(Commands.literal("invite").then(Commands.argument("joueur", net.minecraft.commands.arguments.EntityArgument.player()).executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException(), target=net.minecraft.commands.arguments.EntityArgument.getPlayer(c,"joueur");
