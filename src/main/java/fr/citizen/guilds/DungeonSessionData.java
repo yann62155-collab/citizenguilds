@@ -31,6 +31,7 @@ public final class DungeonSessionData extends SavedData {
     private final Map<String, String> participants = new HashMap<>();
     private final Set<String> eliminated = new HashSet<>();
     private final List<String> activeMobIds = new ArrayList<>();
+    private final Map<String, Integer> pendingRewards = new HashMap<>();
 
     public static DungeonSessionData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -53,6 +54,11 @@ public final class DungeonSessionData extends SavedData {
             String uuid = entry.getString("uuid");
             data.participants.put(uuid, entry.getString("name"));
             if (entry.getBoolean("eliminated")) data.eliminated.add(uuid);
+        }
+        ListTag rewards = tag.getList("pendingRewards", CompoundTag.TAG_COMPOUND);
+        for (int i = 0; i < rewards.size(); i++) {
+            CompoundTag entry = rewards.getCompound(i);
+            data.pendingRewards.put(entry.getString("uuid"), entry.getInt("jade"));
         }
         ListTag mobs = tag.getList("activeMobs", CompoundTag.TAG_COMPOUND);
         for (int i = 0; i < mobs.size(); i++) data.activeMobIds.add(mobs.getCompound(i).getString("uuid"));
@@ -89,6 +95,14 @@ public final class DungeonSessionData extends SavedData {
             mobs.add(entry);
         }
         tag.put("activeMobs", mobs);
+        ListTag rewards = new ListTag();
+        pendingRewards.forEach((uuid, count) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putString("uuid", uuid);
+            entry.putInt("jade", count);
+            rewards.add(entry);
+        });
+        tag.put("pendingRewards", rewards);
         return tag;
     }
 
@@ -178,6 +192,14 @@ public final class DungeonSessionData extends SavedData {
     }
 
     public Set<String> participantIds() { return new HashSet<>(participants.keySet()); }
+    public void addPendingReward(String uuid, int jade) {
+        if (jade > 0) { pendingRewards.merge(uuid, jade, Integer::sum); setDirty(); }
+    }
+    public int claimPendingReward(String uuid) {
+        Integer amount = pendingRewards.remove(uuid);
+        if (amount != null) setDirty();
+        return amount == null ? 0 : amount;
+    }
 
     public Set<String> livingParticipantIds() {
         Set<String> living = new HashSet<>(participants.keySet());
