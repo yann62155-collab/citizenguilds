@@ -51,6 +51,9 @@ public final class DungeonSiteFinder {
         int higherSides = 0;
         int[][] directions = {{-1,0},{1,0},{0,-1},{0,1},{-1,-1},{-1,1},{1,-1},{1,1}};
         for (int[] d : directions) {
+            int sampleX = x + d[0] * 12;
+            int sampleZ = z + d[1] * 12;
+            if (!level.hasChunkAt(new BlockPos(sampleX, level.getMinBuildHeight(), sampleZ))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + d[0] * 12, z + d[1] * 12);
             if (y >= centerY + 4) higherSides++;
         }
