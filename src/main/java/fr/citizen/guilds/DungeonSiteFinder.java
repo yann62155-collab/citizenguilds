@@ -20,6 +20,7 @@ public final class DungeonSiteFinder {
             int x = centerX + level.getRandom().nextInt(257) - 128;
             int z = centerZ + level.getRandom().nextInt(257) - 128;
             if (x < minX || z < minZ) continue;
+            if (!level.hasChunkAt(new BlockPos(x, level.getMinBuildHeight(), z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             if (y < minY || y >= level.getMaxBuildHeight() - 2) continue;
             BlockPos feet = new BlockPos(x, y, z);
@@ -36,6 +37,7 @@ public final class DungeonSiteFinder {
     private static boolean naturalArea(ServerLevel level, int x, int z) {
         for (int dx = -5; dx <= 5; dx++) {
             for (int dz = -5; dz <= 5; dz++) {
+                if (!level.hasChunkAt(new BlockPos(x + dx, level.getMinBuildHeight(), z + dz))) return false;
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + dx, z + dz);
                 if (y <= level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) return false;
                 if (!isNaturalGround(level.getBlockState(new BlockPos(x + dx, y - 1, z + dz)).getBlock())) return false;
