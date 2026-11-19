@@ -15,8 +15,35 @@ jobs:
    - uses: gradle/actions/setup-gradle@v4
      with:
       gradle-version: '8.10.2'
+   - name: Validate JSON resources
+     run: |
+      python3 - <<'PY'
+      import json
+      from pathlib import Path
+      files = list(Path("src/main/resources").rglob("*.json"))
+      for path in files:
+          json.loads(path.read_text(encoding="utf-8"))
+      print(f"Validated {len(files)} JSON resource files.")
+      PY
    - name: Build mod
      run: gradle build --no-daemon
+   - name: Smoke test dedicated server startup
+     run: |
+      mkdir -p run/server
+      printf "eula=true\n" > run/server/eula.txt
+      set +e
+      timeout --signal=TERM --kill-after=10s 150s gradle runServer --no-daemon --console=plain > /tmp/citizen-server-smoke.log 2>&1
+      status=$?
+      set -e
+      tail -n 100 /tmp/citizen-server-smoke.log
+      if [ "$status" -ne 124 ] && [ "$status" -ne 137 ] && [ "$status" -ne 0 ]; then
+        exit "$status"
+      fi
+      test -f run/server/logs/latest.log
+      grep -q "Done (" run/server/logs/latest.log
+      if grep -qi "Failed to load datapacks" run/server/logs/latest.log; then
+        exit 1
+      fi
    - uses: actions/upload-artifact@v4
      with:
       name: CitizenGuilds
