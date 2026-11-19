@@ -11,7 +11,10 @@ Mod de gestion des guildes pour **Minecraft Java 1.21.1**, **NeoForge 21.1.215**
 - **Armure complète en Jade** : casque, plastron, jambières et bottes, avec protection de haut niveau.
 - Butin Jade ajouté aux coffres de donjons vanilla ciblés et aux tables de butin de mods dont le chemin contient dungeon, catacomb ou crypt.
 - Aucune génération de minerai dans les grottes ou le monde ouvert.
-- Interface sombre fantasy accessible avec **G** (tableau de bord visuel en cours de raccordement aux données).
+- Interface sombre fantasy accessible avec **G**, avec synchronisation des membres, grades, banque et journal depuis le serveur.
+- Ramassage automatique de l'objet de Jade configuré vers la banque de la guilde du joueur.
+- Objet de Jade configurable par un administrateur avec `/guild jadeitem namespace:objet` (par défaut `citizenguilds:raw_jade`).
+- Annuaire des guildes et renommage par le chef.
 - Compilation automatisée via GitHub Actions.
 
 ## Obtention et fabrication de la Jade
@@ -21,9 +24,11 @@ Le minerai ne se génère pas dans le monde et ne se mine pas. Fondez-le dans un
 ## Commandes de guilde
 - `/guild create <nom>`
 - `/guild invite <joueur>` puis `/guild accept`
-- `/guild info`
+- `/guild list` et `/guild info`
+- `/guild rename \"Nouveau nom\"`
 - `/guild deposit` et `/guild withdraw <emplacement> [quantite]`
 - `/guild promote <joueur>`, `/guild kick <joueur>`, `/guild leave`, `/guild disband`
+- `/guild jadeitem <namespace:objet>` (administrateur) et `/guild jadeinfo`
 
 ## Installation
 Compilez avec Java 21/Gradle, puis placez le JAR dans le dossier `mods` du client et du serveur. Le mod doit être présent des deux côtés.
