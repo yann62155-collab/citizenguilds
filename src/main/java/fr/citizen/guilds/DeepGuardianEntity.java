@@ -16,11 +16,7 @@ public final class DeepGuardianEntity extends Ravager {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Ravager.createAttributes()
-            .add(Attributes.MAX_HEALTH, 180.0D)
-            .add(Attributes.ATTACK_DAMAGE, 16.0D)
-            .add(Attributes.MOVEMENT_SPEED, 0.28D)
-            .add(Attributes.KNOCKBACK_RESISTANCE, 0.85D);
+        return Ravager.createAttributes();
     }
 
     @Override
