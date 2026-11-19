@@ -47,7 +47,7 @@ Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Le
 3. Vérifier le candidat avec `/guild dungeon site`.
 4. Poser la porte avec `/guild dungeon portal create`.
 
-Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal.
+Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal. Si WorldGuard est disponible sur le serveur Arclight, les régions protégées sont aussi exclues. L'apparition automatique vérifie les chunks déjà chargés et nécessite un administrateur en ligne dans l'Overworld pour effectuer le scan.
 
 ### Lancer une session
 
