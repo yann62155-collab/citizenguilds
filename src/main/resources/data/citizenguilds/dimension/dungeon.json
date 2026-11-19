@@ -1,5 +1,5 @@
 {
-  "type": "minecraft:overworld",
+  "type": "minecraft:the_end",
   "generator": {
     "type": "minecraft:flat",
     "settings": {
@@ -7,8 +7,14 @@
       "features": false,
       "lakes": false,
       "layers": [
-        { "block": "minecraft:bedrock", "height": 1 },
-        { "block": "minecraft:deepslate", "height": 4 }
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        },
+        {
+          "block": "minecraft:deepslate",
+          "height": 4
+        }
       ],
       "structure_overrides": []
     }
