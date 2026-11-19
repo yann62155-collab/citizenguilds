@@ -35,3 +35,31 @@ La réserve stocke des objets physiques, pas de monnaie. La Pierre de Jade peut 
 
 ## Installation
 Compilez avec Java 21/Gradle, puis placez le JAR dans le dossier `mods` du client et du serveur. Le mod doit être présent des deux côtés.
+
+## Donjons de guilde
+
+Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Les salles et les pièges sont construits dans cette dimension isolée : le terrain du monde principal n'est pas creusé ni remplacé.
+
+### Préparer un site (administrateur)
+
+1. Définir les coordonnées minimales autorisées : `/guild dungeon min <x> <y> <z>`.
+2. Se placer dans l'Overworld, dans une zone où les chunks sont déjà chargés, puis lancer `/guild dungeon scan`.
+3. Vérifier le candidat avec `/guild dungeon site`.
+4. Poser la porte avec `/guild dungeon portal create`.
+
+Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal.
+
+### Lancer une session
+
+- `/guild dungeon start <nom de guilde>` ouvre une session pour une seule guilde.
+- Les membres de cette guilde interagissent avec la porte pour entrer dans l'instance.
+- La porte intérieure permet de revenir au site d'entrée.
+- `/guild dungeon status` affiche la vague, les participants et l'état de la session.
+- `/guild dungeon end` ferme la session, retire les créatures suivies et ramène les participants connectés dans l'Overworld.
+- `/guild dungeon portal remove` retire la porte extérieure après la fermeture.
+
+### Déroulement
+
+Le donjon comporte trois zones successives : une salle d'entrée, une salle intermédiaire avec pièges au sol, puis une salle de boss. Les vagues comprennent zombies et araignées, squelettes et husks, puis un Gardien des profondeurs (Ravager renforcé) accompagné de vindicateurs. Une mort élimine définitivement le joueur de la session. Les survivants reçoivent chacun 3 minerais de Pierre de Jade ; les récompenses des joueurs déconnectés sont conservées jusqu'à leur reconnexion. Les victoires et éliminations alimentent les statistiques de guilde.
+
+Une seule session globale peut être active à la fois. Les sessions et les éliminations sont sauvegardées dans les données du monde.
