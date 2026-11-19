@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["JJJ", "J J"],
+  "key": { "J": { "item": "citizenguilds:jade_ingot" } },
+  "result": { "id": "citizenguilds:jade_helmet", "count": 1 }
+}
