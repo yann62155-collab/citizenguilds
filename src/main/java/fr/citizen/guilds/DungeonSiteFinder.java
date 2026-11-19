@@ -29,6 +29,7 @@ public final class DungeonSiteFinder {
             if (!naturalArea(level, x, z)) continue;
             if (!mountainShelter(level, x, z, y)) continue;
             if (nearAnyPlayer(level, feet, 64.0D)) continue;
+            if (DungeonProtection.isProtectedArea(level, feet)) continue;
             return feet;
         }
         return null;
