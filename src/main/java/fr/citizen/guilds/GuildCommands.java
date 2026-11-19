@@ -63,6 +63,34 @@ public final class GuildCommands {
                 g.members.forEach((uuid,name)->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+name+" §7- "+g.roles.getOrDefault(uuid,"MEMBER")),false));
                 return 1;
             }))
+            .then(Commands.literal("stats").executes(c -> {
+                ServerPlayer p=c.getSource().getPlayerOrException();
+                GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
+                if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal(
+                    "§6[Statistiques] §f"+g.name+" | Membres: "+g.members.size()+" | Objets deposes: "+g.totalDepositedItems+" | Emplacements: "+g.bank.size()+"/54 | Victoires de donjon: "+g.dungeonWins+" | Morts en donjon: "+g.dungeonDeaths),false);
+                return 1;
+            }))
+            .then(Commands.literal("top").executes(c -> {
+                var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Classement des guildes] §7(activité de dépôt, pas une valeur monétaire)"),false);
+                guilds.stream().sorted(java.util.Comparator.comparingLong((GuildSavedData.Guild g)->g.totalDepositedItems).reversed()).limit(10).forEach(g ->
+                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7- "+g.totalDepositedItems+" objet(s) déposé(s)"),false));
+                return 1;
+            }))
+            .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("list").executes(c -> {
+                    var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
+                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§c[Administration] §f"+guilds.size()+" guilde(s)"),false);
+                    guilds.forEach(g->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7| "+g.members.size()+" membre(s) | "+g.id),false));
+                    return 1;
+                }))
+                .then(Commands.literal("disband").then(Commands.argument("nom",StringArgumentType.string()).executes(c -> {
+                    String name=StringArgumentType.getString(c,"nom");
+                    return GuildSavedData.get(c.getSource().getServer()).adminDisband(name)
+                        ?ok(c.getSource(),"Guilde "+name+" supprimee par administration.")
+                        :fail(c.getSource(),"Guilde introuvable.");
+                }))))
             .then(Commands.literal("journal").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
