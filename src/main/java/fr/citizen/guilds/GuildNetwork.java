@@ -64,6 +64,10 @@ public final class GuildNetwork {
         root.addProperty("isLeader", guild.leader.equals(player.getUUID().toString()));
         root.addProperty("canManage", guild.canManage(player.getUUID().toString()));
         root.addProperty("memberCount", guild.members.size());
+        root.addProperty("totalDepositedItems", guild.totalDepositedItems);
+        root.addProperty("dungeonWins", guild.dungeonWins);
+        root.addProperty("dungeonDeaths", guild.dungeonDeaths);
+        root.addProperty("isAdmin", player.hasPermissions(2));
 
         JsonArray members = new JsonArray();
         guild.members.forEach((uuid, name) -> {
