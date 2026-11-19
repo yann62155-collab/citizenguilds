@@ -14,7 +14,7 @@ public final class GuildCommands {
     private GuildCommands() {}
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("guild")
-            .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.word()).executes(c -> {
+            .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.string()).executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 if(GuildSavedData.get(p.getServer()).create(p,StringArgumentType.getString(c,"nom"))==null) return fail(c.getSource(),"Tu appartiens deja a une guilde.");
                 return ok(c.getSource(),"Guilde creee. Tu en es le chef.");
