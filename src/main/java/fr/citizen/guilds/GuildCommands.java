@@ -104,6 +104,12 @@ public final class GuildCommands {
                                 DungeonData.get(c.getSource().getServer()).setMinimum(x, y, z);
                                 return ok(c.getSource(), "Limite minimale des donjons definie : X " + x + ", Y " + y + ", Z " + z + ".");
                             })))))
+                .then(Commands.literal("reward").requires(source -> source.hasPermission(2))
+                    .then(Commands.argument("quantite", IntegerArgumentType.integer(0, 64)).executes(c -> {
+                        int amount = IntegerArgumentType.getInteger(c, "quantite");
+                        DungeonData.get(c.getSource().getServer()).setRewardJade(amount);
+                        return ok(c.getSource(), "Recompense de donjon definie a " + amount + " minerai(s) de Pierre de Jade par survivant.");
+                    })))
                 .then(Commands.literal("scan").requires(source -> source.hasPermission(2)).executes(c -> {
                     ServerPlayer player = c.getSource().getPlayerOrException();
                     if (player.serverLevel() != player.getServer().overworld())
