@@ -75,6 +75,15 @@ public final class GuildCommands {
                 }
                 return 1;
             }))
+            .then(Commands.literal("jadeitem").requires(source -> source.hasPermission(2))
+                .then(Commands.argument("item", StringArgumentType.word()).executes(c -> {
+                    String id = StringArgumentType.getString(c, "item");
+                    net.minecraft.resources.ResourceLocation key = net.minecraft.resources.ResourceLocation.tryParse(id);
+                    if (key == null || !net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(key))
+                        return fail(c.getSource(), "Identifiant d'objet invalide ou inconnu.");
+                    GuildSavedData.get(c.getSource().getServer()).setJadeItemId(key.toString());
+                    return ok(c.getSource(), "Objet de Jade configure : " + key + ". Les prochains ramassages seront verses a la banque de guilde.");
+                })))
             .then(Commands.literal("jadeinfo").executes(c -> {
                 c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal(
                     "§6[Guildes] §fPierre de Jade : raw_jade -> four/haut-fourneau -> jade_ingot -> armure complète."),false);
