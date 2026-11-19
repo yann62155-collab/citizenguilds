@@ -137,9 +137,12 @@ public final class GuildCommands {
                         return fail(c.getSource(), "Le scan doit etre lance dans l'Overworld.");
                     DungeonData data = DungeonData.get(player.getServer());
                     var previousSite = data.lastSite();
-                    if (previousSite != null && player.serverLevel().hasChunkAt(previousSite)
-                        && player.serverLevel().getBlockState(previousSite).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                        return fail(c.getSource(), "Une porte existe deja. Retire-la ou termine la session avant un nouveau scan.");
+                    if (previousSite != null) {
+                        player.serverLevel().getChunkAt(previousSite);
+                        if (player.serverLevel().getBlockState(previousSite).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                            return fail(c.getSource(), "Une porte existe deja. Retire-la ou termine la session avant un nouveau scan.");
+                        data.clearLastSite();
+                    }
                     var site = DungeonSiteFinder.find(player.serverLevel(), player, data.minX(), data.minY(), data.minZ());
                     if (site == null)
                         return fail(c.getSource(), "Aucun site naturel adapte trouve a proximite. Eloigne-toi des constructions et relance le scan.");
