@@ -56,6 +56,7 @@ public final class DungeonEvents {
         if (session.aliveCount() == 0) {
             ServerLevel dungeon = player.getServer().getLevel(CitizenDimensions.DUNGEON);
             if (dungeon != null) session.removeActiveMobs(dungeon);
+            GuildSavedData.get(player.getServer()).recordDungeonFailure(session.guildId());
             session.finish(false);
             player.getServer().getPlayerList().broadcastSystemMessage(
                 Component.literal("§c[Donjon] Toute l'equipe a ete eliminee. La session est un echec."), false);
@@ -77,6 +78,7 @@ public final class DungeonEvents {
         if (level == null) return;
         if (session.aliveCount() == 0) {
             session.removeActiveMobs(level);
+            GuildSavedData.get(server).recordDungeonFailure(session.guildId());
             session.finish(false);
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
             return;
@@ -95,6 +97,7 @@ public final class DungeonEvents {
             server.getPlayerList().broadcastSystemMessage(
                 Component.literal("§6[Donjon] §fVague " + session.wave() + "/3 : " + spawned.size() + " adversaire(s) apparaissent."), false);
             if (spawned.isEmpty()) {
+                GuildSavedData.get(server).recordDungeonFailure(session.guildId());
                 session.finish(false);
                 server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Impossible de faire apparaitre les creatures. Session arretee."), false);
             }
