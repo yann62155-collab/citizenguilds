@@ -23,6 +23,10 @@ public final class DungeonPortalBlock extends Block {
             serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Aucun donjon n'est actuellement ouvert."));
             return InteractionResult.CONSUME;
         }
+        if (session.finished()) {
+            serverPlayer.sendSystemMessage(Component.literal(session.victory() ? "§a[Donjon] Cette session est deja terminee par une victoire." : "§c[Donjon] Cette session est terminee apres elimination de l\u0027equipe."));
+            return InteractionResult.CONSUME;
+        }
         if (!session.site().equals(pos)) {
             serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Cette porte n'est pas rattachee a la session active."));
             return InteractionResult.CONSUME;
