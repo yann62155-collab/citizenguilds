@@ -20,7 +20,7 @@ public final class GuildManagementScreen extends Screen {
         nav("Vue d'ensemble","overview",sx,sy);
         nav("Membres","members",sx,sy+38);
         nav("Banque de guilde","bank",sx,sy+76);
-        nav("Pierres de Jade","jade",sx,sy+114);
+        nav("Armure de Jade","jade",sx,sy+114);
         nav("Activites","activities",sx,sy+152);
         nav("Journal","journal",sx,sy+190);
         nav("Commandes","help",sx,sy+228);
@@ -101,9 +101,10 @@ public final class GuildManagementScreen extends Screen {
         g.drawString(font,"Les depots et retraits seront traces dans le journal.",a,b+158,MUTED,false);
     }
     private void renderJade(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"TRESOR DE JADE","Les pierres gagnees en donjon alimenteront le stock de guilde.");
-        card(g,a,b+45,220,90,"PIERRES COLLECTEES","—","Total de la guilde");
-        card(g,a+235,b+45,225,90,"DERNIER DEPOT","—","Historique automatique");
+        int a=x+176,b=y+103; section(g,a,b,"EQUIPEMENT DE JADE","Un minerai rare, reserve aux explorateurs de donjons.");
+        card(g,a,b+45,220,90,"OBTENTION","DONJONS","Butin de coffres speciaux");
+        card(g,a+235,b+45,225,90,"UTILISATION","ARMURE","Casque, plastron, jambières, bottes");
+        g.drawString(font,"Le minerai brut doit etre fondu en lingots pour fabriquer l'armure.",a,b+158,MUTED,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"ACTIVITES","Donjons, boss et contributions des compagnons.");
