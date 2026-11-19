@@ -110,7 +110,25 @@ public final class GuildManagementScreen extends Screen {
         card(g,a,b+45,220,90,"DONJONS","—","Participations");
         card(g,a+235,b+45,225,90,"BOSS VAINCUS","—","Succes de la guilde");
     }
-    private void renderHelp(GuiGraphics g,int x,int y) {\n        int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Toutes les fonctions du systeme sont disponibles en jeu.");\n        String[] lines={\n            "/guild create <nom>  - Fonder une guilde",\n            "/guild invite <joueur>  - Inviter un joueur",\n            "/guild accept  - Accepter une invitation",\n            "/guild info  - Voir les membres et le tresor",\n            "/guild deposit  - Deposer l objet tenu en main",\n            "/guild withdraw <emplacement> [quantite]  - Retirer du coffre",\n            "/guild promote <joueur>  - Basculer membre/officier (chef)",\n            "/guild kick <joueur>  - Exclure un membre (chef)",\n            "/guild leave  - Quitter sa guilde",\n            "/guild disband  - Dissoudre sa guilde (chef)",\n            "/guild jadeitem <namespace:objet>  - Configurer la Pierre de Jade (admin)"\n        };\n        int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}\n    }\n\n    private void renderJournal(GuiGraphics g,int x,int y) {
+    private void renderHelp(GuiGraphics g,int x,int y) {
+        int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Toutes les fonctions du systeme sont disponibles en jeu.");
+        String[] lines={
+            "/guild create <nom>  - Fonder une guilde",
+            "/guild invite <joueur>  - Inviter un joueur",
+            "/guild accept  - Accepter une invitation",
+            "/guild info  - Voir les membres et le tresor",
+            "/guild deposit  - Deposer l objet tenu en main",
+            "/guild withdraw <emplacement> [quantite]  - Retirer du coffre",
+            "/guild promote <joueur>  - Basculer membre/officier (chef)",
+            "/guild kick <joueur>  - Exclure un membre (chef)",
+            "/guild leave  - Quitter sa guilde",
+            "/guild disband  - Dissoudre sa guilde (chef)",
+            "/guild jadeitem <namespace:objet>  - Configurer la Pierre de Jade (admin)"
+        };
+        int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
+    }
+
+    private void renderJournal(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"JOURNAL DE GUILDE","Une trace des invitations, depots, retraits et promotions.");
         g.fill(a,b+45,a+460,b+235,PANEL); g.renderOutline(a,b+45,460,190,LINE);
         g.drawString(font,"Aucun evenement enregistre.",a+14,b+61,MUTED,false);
