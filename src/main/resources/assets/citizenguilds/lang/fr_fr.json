@@ -1,5 +1,9 @@
 {
- "key.citizenguilds.open": "Ouvrir l'interface de guilde",
- "key.categories.citizenguilds": "Citizen Guilds",
- "screen.citizenguilds.title": "Gestion de guilde"
+  "screen.citizenguilds.title": "Citizen Guilds",
+  "item.citizenguilds.raw_jade": "Minerai de Jade",
+  "item.citizenguilds.jade_ingot": "Lingot de Jade",
+  "item.citizenguilds.jade_helmet": "Casque en Jade",
+  "item.citizenguilds.jade_chestplate": "Plastron en Jade",
+  "item.citizenguilds.jade_leggings": "Jambières en Jade",
+  "item.citizenguilds.jade_boots": "Bottes en Jade"
 }
