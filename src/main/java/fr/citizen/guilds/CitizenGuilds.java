@@ -9,5 +9,6 @@ public final class CitizenGuilds {
     public CitizenGuilds(IEventBus modBus) {
         CitizenJadeItems.ITEMS.register(modBus);
         CitizenJadeItems.ARMOR_MATERIALS.register(modBus);
+        CitizenDungeonBlocks.BLOCKS.register(modBus);
     }
 }
