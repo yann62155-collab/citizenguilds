@@ -49,6 +49,7 @@ public final class GuildNetwork {
         JsonObject root = new JsonObject();
         root.addProperty("hasGuild", guild != null);
         root.addProperty("player", player.getGameProfile().getName());
+        root.addProperty("isAdmin", player.hasPermissions(2));
         JsonArray guildList = new JsonArray();
         for (GuildSavedData.Guild item : data.allGuilds()) {
             JsonObject entry = new JsonObject();
@@ -67,8 +68,6 @@ public final class GuildNetwork {
         root.addProperty("totalDepositedItems", guild.totalDepositedItems);
         root.addProperty("dungeonWins", guild.dungeonWins);
         root.addProperty("dungeonDeaths", guild.dungeonDeaths);
-        root.addProperty("isAdmin", player.hasPermissions(2));
-
         JsonArray members = new JsonArray();
         guild.members.forEach((uuid, name) -> {
             JsonObject m = new JsonObject();
