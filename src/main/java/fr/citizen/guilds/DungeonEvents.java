@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = CitizenGuilds.MOD_ID)
@@ -23,6 +24,18 @@ public final class DungeonEvents {
     private static int tickCounter;
     private static int trapCounter;
     private DungeonEvents() {}
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!player.serverLevel().dimension().equals(CitizenDimensions.DUNGEON)) return;
+        DungeonSessionData session = DungeonSessionData.get(player.getServer());
+        if (session.active() && session.isParticipant(player.getUUID().toString()) && !session.isEliminated(player.getUUID().toString())) return;
+        var overworld = player.getServer().overworld();
+        BlockPos spawn = overworld.getSharedSpawnPos();
+        player.teleportTo(overworld, spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        player.sendSystemMessage(Component.literal("§e[Donjon] La session n'est plus accessible. Tu as ete renvoye au spawn."));
+    }
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
@@ -54,6 +67,12 @@ public final class DungeonEvents {
         }
         ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
         if (level == null) return;
+        boolean atLeastOneOnline = false;
+        for (String uuid : session.livingParticipantIds()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
+            if (player != null && player.serverLevel() == level) { atLeastOneOnline = true; break; }
+        }
+        if (!atLeastOneOnline) return;
 
         if (session.wavePending()) {
             if (session.wave() == 0) session.nextWave();
