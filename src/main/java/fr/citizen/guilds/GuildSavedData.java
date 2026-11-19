@@ -104,15 +104,35 @@ public final class GuildSavedData extends SavedData {
         return true;
     }
 
-    public boolean invite(ServerPlayer inviter, ServerPlayer target) {
+    /** Invite un joueur identifié exclusivement par son numéro CitizenHibou. */
+    public boolean inviteByHibou(ServerPlayer inviter, int owlNumber) {
         Guild guild = guildOf(inviter);
-        if (guild == null || !guild.canManage(inviter.getUUID().toString())) return false;
-        if (membership.containsKey(target.getUUID().toString())) return false;
-        invitations.put(target.getUUID().toString(), guild.id);
-        target.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Guildes] §fTu as recu une invitation pour rejoindre " + guild.name + ". Utilise /guild accept pour la rejoindre."));
-        guild.log(inviter.getGameProfile().getName() + " a invite " + target.getGameProfile().getName());
-        setDirty();
-        return true;
+        if (guild == null || !guild.canManage(inviter.getUUID().toString()) || owlNumber < 1) return false;
+        try {
+            Class<?> registryClass = Class.forName("fr.citizen.hiboupostal.data.OwlPostData");
+            Object registry = registryClass.getMethod("get", MinecraftServer.class).invoke(null, inviter.getServer());
+            Object result = registryClass.getMethod("findByNumber", int.class).invoke(registry, owlNumber);
+            if (!(result instanceof Optional<?> optional) || optional.isEmpty() || !(optional.get() instanceof UUID targetId)) return false;
+            String targetUuid = targetId.toString();
+            if (membership.containsKey(targetUuid) || invitations.containsKey(targetUuid)) return false;
+            String targetName = (String) registryClass.getMethod("getName", UUID.class).invoke(registry, targetId);
+            if (targetName == null || targetName.isBlank() || targetName.equals("?")) return false;
+            invitations.put(targetUuid, guild.id);
+            ServerPlayer onlineTarget = inviter.getServer().getPlayerList().getPlayer(targetId);
+            if (onlineTarget != null) {
+                onlineTarget.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§6[Guildes] §fTu as reçu une invitation pour rejoindre " + guild.name + ". Utilise /guild accept ou /guild refuse."));
+            }
+            guild.log(inviter.getGameProfile().getName() + " a envoyé une invitation au hibou n°" + owlNumber + " (" + targetName + ")");
+            setDirty();
+            inviter.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§6[Guildes] §fInvitation envoyée à " + targetName + " (hibou n°" + owlNumber + ")."));
+            return true;
+        } catch (ReflectiveOperationException | LinkageError exception) {
+            inviter.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                "§c[Guildes] Impossible de consulter le registre CitizenHibou. Vérifie que Hibou Postal est installé."));
+            return false;
+        }
     }
     public boolean accept(ServerPlayer player) {
         String uuid = player.getUUID().toString();
@@ -125,6 +145,11 @@ public final class GuildSavedData extends SavedData {
         guild.log(player.getGameProfile().getName() + " a rejoint la guilde");
         setDirty();
         return true;
+    }
+    public boolean refuse(ServerPlayer player) {
+        boolean removed = invitations.remove(player.getUUID().toString()) != null;
+        if (removed) setDirty();
+        return removed;
     }
     public boolean leave(ServerPlayer player) {
         Guild guild = guildOf(player);
