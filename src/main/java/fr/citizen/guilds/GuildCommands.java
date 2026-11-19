@@ -91,6 +91,37 @@ public final class GuildCommands {
                         ?ok(c.getSource(),"Guilde "+name+" supprimee par administration.")
                         :fail(c.getSource(),"Guilde introuvable.");
                 }))))
+            .then(Commands.literal("dungeon")
+                .then(Commands.literal("min").requires(source -> source.hasPermission(2))
+                    .then(Commands.argument("x", IntegerArgumentType.integer())
+                        .then(Commands.argument("y", IntegerArgumentType.integer())
+                            .then(Commands.argument("z", IntegerArgumentType.integer()).executes(c -> {
+                                int x = IntegerArgumentType.getInteger(c, "x");
+                                int y = IntegerArgumentType.getInteger(c, "y");
+                                int z = IntegerArgumentType.getInteger(c, "z");
+                                DungeonData.get(c.getSource().getServer()).setMinimum(x, y, z);
+                                return ok(c.getSource(), "Limite minimale des donjons definie : X " + x + ", Y " + y + ", Z " + z + ".");
+                            })))))
+                .then(Commands.literal("scan").requires(source -> source.hasPermission(2)).executes(c -> {
+                    ServerPlayer player = c.getSource().getPlayerOrException();
+                    if (player.serverLevel() != player.getServer().overworld())
+                        return fail(c.getSource(), "Le scan doit etre lance dans l'Overworld.");
+                    DungeonData data = DungeonData.get(player.getServer());
+                    var site = DungeonSiteFinder.find(player.serverLevel(), player, data.minX(), data.minY(), data.minZ());
+                    if (site == null)
+                        return fail(c.getSource(), "Aucun site naturel adapte trouve a proximite. Eloigne-toi des constructions et relance le scan.");
+                    data.setLastSite(site);
+                    player.getServer().getPlayerList().broadcastSystemMessage(
+                        net.minecraft.network.chat.Component.literal("§6[Donjon] §fSite naturel potentiel detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld). Aucun bloc n'a ete modifie."), false);
+                    return 1;
+                }))
+                .then(Commands.literal("site").executes(c -> {
+                    DungeonData data = DungeonData.get(c.getSource().getServer());
+                    var site = data.lastSite();
+                    if (site == null) return fail(c.getSource(), "Aucun site de donjon n'a encore ete valide.");
+                    return ok(c.getSource(), "Dernier site detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld).");
+                }))
+            )
             .then(Commands.literal("journal").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
