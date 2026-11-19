@@ -1,6 +1,9 @@
 package fr.citizen.guilds;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -16,7 +19,7 @@ public final class DeepGuardianModel extends EntityModel<DeepGuardianEntity> {
     private final ModelPart root, head, leftArm, rightArm, leftLeg, rightLeg;
 
     public DeepGuardianModel(ModelPart root) {
-        super(root);
+        super(RenderType::entityCutoutNoCull);
         this.root = root;
         this.head = root.getChild("head");
         this.leftArm = root.getChild("left_arm");
@@ -25,40 +28,37 @@ public final class DeepGuardianModel extends EntityModel<DeepGuardianEntity> {
         this.rightLeg = root.getChild("right_leg");
     }
 
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        root.render(poseStack, buffer, packedLight, packedOverlay, color);
+    }
+
     public static LayerDefinition createBodyLayer() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("body", CubeListBuilder.create()
             .texOffs(0, 0).addBox(-8, -12, -5, 16, 18, 10)
-            .texOffs(0, 30).addBox(-9, -10, -6, 18, 12, 12),
-            PartPose.offset(0, 5, 0));
+            .texOffs(0, 30).addBox(-9, -10, -6, 18, 12, 12), PartPose.offset(0, 5, 0));
         PartDefinition head = root.addOrReplaceChild("head", CubeListBuilder.create()
             .texOffs(0, 54).addBox(-5, -7, -5, 10, 10, 10)
             .texOffs(40, 54).addBox(-3, -3, -6, 6, 4, 2)
             .texOffs(40, 0).addBox(-8, -13, -1, 4, 9, 3)
-            .texOffs(40, 0).addBox(4, -13, -1, 4, 9, 3),
-            PartPose.offset(0, -9, -1));
+            .texOffs(40, 0).addBox(4, -13, -1, 4, 9, 3), PartPose.offset(0, -9, -1));
         head.addOrReplaceChild("crown_crystal", CubeListBuilder.create()
-            .texOffs(56, 30).addBox(-2, -5, -2, 4, 6, 4),
-            PartPose.offset(0, -7, 0));
+            .texOffs(56, 30).addBox(-2, -5, -2, 4, 6, 4), PartPose.offset(0, -7, 0));
         root.addOrReplaceChild("left_arm", CubeListBuilder.create()
             .texOffs(0, 42).addBox(-3, -2, -4, 7, 19, 8)
-            .texOffs(30, 42).addBox(-4, 12, -5, 9, 6, 10),
-            PartPose.offset(10, -3, 0));
+            .texOffs(30, 42).addBox(-4, 12, -5, 9, 6, 10), PartPose.offset(10, -3, 0));
         root.addOrReplaceChild("right_arm", CubeListBuilder.create()
             .texOffs(0, 42).addBox(-4, -2, -4, 7, 19, 8)
-            .texOffs(30, 42).addBox(-5, 12, -5, 9, 6, 10),
-            PartPose.offset(-10, -3, 0));
+            .texOffs(30, 42).addBox(-5, 12, -5, 9, 6, 10), PartPose.offset(-10, -3, 0));
         root.addOrReplaceChild("left_leg", CubeListBuilder.create()
-            .texOffs(40, 12).addBox(-3, 0, -4, 7, 12, 8),
-            PartPose.offset(5, 12, 0));
+            .texOffs(40, 12).addBox(-3, 0, -4, 7, 12, 8), PartPose.offset(5, 12, 0));
         root.addOrReplaceChild("right_leg", CubeListBuilder.create()
-            .texOffs(40, 12).addBox(-4, 0, -4, 7, 12, 8),
-            PartPose.offset(-5, 12, 0));
+            .texOffs(40, 12).addBox(-4, 0, -4, 7, 12, 8), PartPose.offset(-5, 12, 0));
         root.addOrReplaceChild("back_crystals", CubeListBuilder.create()
             .texOffs(56, 40).addBox(-7, -12, 0, 4, 9, 4)
-            .addBox(3, -15, 0, 4, 12, 4)
-            .addBox(-2, -17, 2, 4, 10, 4),
+            .addBox(3, -15, 0, 4, 12, 4).addBox(-2, -17, 2, 4, 10, 4),
             PartPose.offset(0, 5, 5));
         return LayerDefinition.create(mesh, 96, 96);
     }
