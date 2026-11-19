@@ -80,9 +80,11 @@ public final class GuildSavedData extends SavedData {
 
     public Guild create(ServerPlayer leader, String name) {
         String uuid = leader.getUUID().toString();
-        if (membership.containsKey(uuid)) return null;
+        String clean = name == null ? "" : name.trim();
+        if (membership.containsKey(uuid) || clean.length() < 3 || clean.length() > 24
+            || guilds.values().stream().anyMatch(g -> g.name.equalsIgnoreCase(clean))) return null;
         String id = UUID.randomUUID().toString();
-        Guild guild = new Guild(id, name, uuid, leader.getGameProfile().getName());
+        Guild guild = new Guild(id, clean, uuid, leader.getGameProfile().getName());
         guilds.put(id, guild);
         membership.put(uuid, id);
         guild.log("La guilde " + name + " a ete fondee par " + leader.getGameProfile().getName());
@@ -93,7 +95,8 @@ public final class GuildSavedData extends SavedData {
         Guild guild = guildOf(player);
         if (guild == null || !guild.leader.equals(player.getUUID().toString())) return false;
         String clean = newName == null ? "" : newName.trim();
-        if (clean.length() < 3 || clean.length() > 24) return false;
+        if (clean.length() < 3 || clean.length() > 24
+            || guilds.values().stream().anyMatch(other -> !other.id.equals(guild.id) && other.name.equalsIgnoreCase(clean))) return false;
         String old = guild.name;
         guild.name = clean;
         guild.log("La guilde a ete renommee de " + old + " en " + clean);
