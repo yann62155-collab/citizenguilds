@@ -136,6 +136,17 @@ public final class GuildManagementScreen extends Screen {
         g.drawString(font,tabTitle(),x+176,y+60,GOLD,false);
         g.fill(x+174,y+78,x+636,y+79,LINE);
         super.render(g,mouseX,mouseY,partialTick);
+        int activeNavY = switch(tab) {
+            case "members" -> y+136;
+            case "bank" -> y+168;
+            case "jade" -> y+200;
+            case "activities" -> y+232;
+            case "journal" -> y+264;
+            case "help" -> y+296;
+            case "admin" -> y+328;
+            default -> y+104;
+        };
+        g.fill(x+12,activeNavY,x+15,activeNavY+26,GOLD);
         switch(tab) {
             case "members" -> renderMembers(g,x,y);
             case "bank" -> renderBank(g,x,y);
