@@ -27,13 +27,13 @@ public final class GuildManagementScreen extends Screen {
         int sx=x+14, sy=y+104;
         GuildNetwork.requestSync();
         nav("Vue d'ensemble","overview",sx,sy);
-        nav("Membres","members",sx,sy+34);
-        nav("Réserve","bank",sx,sy+68);
-        nav("Armure de Jade","jade",sx,sy+102);
-        nav("Activites","activities",sx,sy+136);
-        nav("Journal","journal",sx,sy+170);
-        nav("Commandes","help",sx,sy+204);
-        nav("Administration","admin",sx,sy+238);
+        nav("Membres & rôles","members",sx,sy+32);
+        nav("Réserve","bank",sx,sy+64);
+        nav("Jade & équipement","jade",sx,sy+96);
+        nav("Activités & donjons","activities",sx,sy+128);
+        nav("Journal","journal",sx,sy+160);
+        nav("Aide & commandes","help",sx,sy+192);
+        nav("Administration","admin",sx,sy+224);
         addRenderableWidget(Button.builder(Component.literal("✕"), b -> onClose()).bounds(x+615,y+14,24,22).build());
         buildTabControls(x,y);
     }
@@ -121,12 +121,19 @@ public final class GuildManagementScreen extends Screen {
         g.fill(x+1,y+1,x+649,y+3,GOLD); g.fill(x+1,y+4,x+157,y+389,SIDEBAR);
         g.fill(x+157,y+4,x+158,y+389,LINE);
         g.drawString(font,"CITIZEN",x+18,y+18,GOLD,false);
-        g.drawString(font,"G U I L D S",x+18,y+33,WHITE,false);
-        g.drawString(font,"CHRONIQUES & COMPAGNIES",x+18,y+61,MUTED,false);
-        g.fill(x+14,y+83,x+143,y+84,LINE);
-        g.drawString(font,"ESPACE DE GUILDE",x+176,y+20,MUTED,false);
-        g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? snapshot.get("name").getAsString() : "Le sanctuaire des compagnons",x+176,y+39,WHITE,false);
-        g.drawString(font,"ACTIONS CONNECTEES AU SERVEUR",x+176,y+59,GOLD,false);
+        g.drawString(font,"GUILDES",x+18,y+34,WHITE,false);
+        g.drawString(font,"GESTION DE COMPAGNIE",x+18,y+61,MUTED,false);
+        g.fill(x+14,y+82,x+143,y+83,LINE);
+        g.drawString(font,"NAVIGATION",x+18,y+91,MUTED,false);
+        String[] navIds={"overview","members","bank","jade","activities","journal","help","admin"};
+        int[] navY={104,136,168,200,232,264,296,328};
+        for(int i=0;i<navIds.length;i++) if(tab.equals(navIds[i])) {
+            g.fill(x+12,y+navY[i],x+145,y+navY[i]+27,PANEL_ALT);
+            g.fill(x+12,y+navY[i],x+15,y+navY[i]+27,GOLD);
+        }
+        g.drawString(font,"ESPACE DE GUILDE",x+176,y+18,MUTED,false);
+        g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? snapshot.get("name").getAsString() : "Aucune guilde sélectionnée",x+176,y+38,WHITE,false);
+        g.drawString(font,tabTitle(),x+176,y+60,GOLD,false);
         g.fill(x+174,y+78,x+636,y+79,LINE);
         super.render(g,mouseX,mouseY,partialTick);
         switch(tab) {
@@ -139,8 +146,21 @@ public final class GuildManagementScreen extends Screen {
             case "admin" -> renderAdmin(g,x,y);
             default -> renderOverview(g,x,y);
         }
-        g.drawString(font,"CITIZEN GUILDS  •  INTERFACE CONNECTEE",x+176,y+370,MUTED,false);
+        g.drawString(font,"CITIZEN GUILDS  •  Les changements sont validés par le serveur",x+176,y+370,MUTED,false);
     }
+    private String tabTitle() {
+        return switch(tab) {
+            case "members" -> "MEMBRES ET RESPONSABILITÉS";
+            case "bank" -> "RÉSERVE COMMUNE";
+            case "jade" -> "MINERAIS ET ÉQUIPEMENT";
+            case "activities" -> "ACTIVITÉS ET DONJONS";
+            case "journal" -> "HISTORIQUE DE LA GUILDE";
+            case "help" -> "GUIDE DU CHEF ET DES MEMBRES";
+            case "admin" -> "OUTILS D'ADMINISTRATION";
+            default -> "TABLEAU DE BORD";
+        };
+    }
+
     private void card(GuiGraphics g,int x,int y,int w,int h,String heading,String value,String detail) {
         g.fill(x,y,x+w,y+h,PANEL); g.renderOutline(x,y,w,h,LINE); g.fill(x+1,y+1,x+w-1,y+3,GOLD_DARK);
         g.drawString(font,heading,x+12,y+12,MUTED,false); g.drawString(font,value,x+12,y+34,GOLD,false);
@@ -172,7 +192,7 @@ public final class GuildManagementScreen extends Screen {
             g.drawString(font,m.get("role").getAsString(),a+330,yy+7,GOLD,false);
             yy+=25;
         }
-        if(members.isEmpty())g.drawString(font,"Aucun membre a afficher. Actualisez les donnees.",a,b+52,MUTED,false);
+        if(members.isEmpty())g.drawString(font,"Aucun membre à afficher. Actualisez les données.",a,b+52,MUTED,false);
     }
     private void renderBank(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
@@ -251,6 +271,6 @@ public final class GuildManagementScreen extends Screen {
         for(int i=0;i<Math.min(7,logs.size());i++){
             g.drawString(font,"• "+logs.get(i).getAsString(),a+10,yy,MUTED,false); yy+=18;
         }
-        if(logs.isEmpty())g.drawString(font,"Aucune activite enregistree.",a+12,b+61,MUTED,false);
+        if(logs.isEmpty())g.drawString(font,"Aucune activité enregistrée.",a+12,b+61,MUTED,false);
     }
 }
