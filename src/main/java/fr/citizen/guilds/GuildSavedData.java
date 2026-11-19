@@ -12,6 +12,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 /** Persistent server-side storage for Citizen Guilds. */
 public final class GuildSavedData extends SavedData {
     private static final String DATA_NAME = "citizenguilds_data";
+    private static final int BANK_SLOTS = 54;
     private final Map<String, Guild> guilds = new LinkedHashMap<>();
     private final Map<String, String> membership = new HashMap<>();
     private final Map<String, String> invitations = new HashMap<>();
@@ -122,8 +123,30 @@ public final class GuildSavedData extends SavedData {
     public boolean deposit(ServerPlayer player, ItemStack stack) {
         Guild guild = guildOf(player);
         if (guild == null || stack.isEmpty()) return false;
-        guild.bank.add(stack.copy());
-        guild.log(player.getGameProfile().getName() + " a depose " + stack.getCount() + "x " + stack.getHoverName().getString());
+        int remaining = stack.getCount();
+        for (ItemStack stored : guild.bank) {
+            if (ItemStack.isSameItemSameComponents(stored, stack)) {
+                remaining -= Math.min(remaining, stored.getMaxStackSize() - stored.getCount());
+                if (remaining <= 0) break;
+            }
+        }
+        int freeSlots = BANK_SLOTS - guild.bank.size();
+        int perSlot = stack.getMaxStackSize();
+        if (remaining > freeSlots * perSlot) return false;
+
+        int deposited = stack.getCount();
+        for (ItemStack stored : guild.bank) {
+            if (!ItemStack.isSameItemSameComponents(stored, stack)) continue;
+            int moved = Math.min(remaining, stored.getMaxStackSize() - stored.getCount());
+            if (moved > 0) { stored.grow(moved); remaining -= moved; }
+            if (remaining <= 0) break;
+        }
+        while (remaining > 0) {
+            int moved = Math.min(remaining, perSlot);
+            guild.bank.add(stack.copyWithCount(moved));
+            remaining -= moved;
+        }
+        guild.log(player.getGameProfile().getName() + " a depose " + deposited + "x " + stack.getHoverName().getString());
         stack.setCount(0); setDirty(); return true;
     }
     public ItemStack withdraw(ServerPlayer player, int slot, int count) {
