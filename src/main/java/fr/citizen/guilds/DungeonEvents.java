@@ -170,18 +170,21 @@ public final class DungeonEvents {
         GuildSavedData data = GuildSavedData.get(server);
         data.recordDungeonWin(session.guildId());
         int rewarded = 0;
+        int jadeReward = DungeonData.get(server).rewardJade();
         for (String uuid : session.livingParticipantIds()) {
-            session.addPendingReward(uuid, 3);
+            session.addPendingReward(uuid, jadeReward);
             ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
             if (player == null) continue;
             int jade = session.claimPendingReward(uuid);
-            ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), jade);
-            if (!player.getInventory().add(reward)) player.drop(reward, false);
-            player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Tu recois " + jade + " minerais de Pierre de Jade."));
+            if (jade > 0) {
+                ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), jade);
+                if (!player.getInventory().add(reward)) player.drop(reward, false);
+            }
+            player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Recompense : " + jade + " minerai(s) de Pierre de Jade."));
             rewarded++;
         }
         server.getPlayerList().broadcastSystemMessage(
             Component.literal("§6[Donjon] §aLa guilde " + session.guildName()
-                + " a vaincu le Gardien des profondeurs ! " + rewarded + " aventurier(s) connecte(s) recompense(s)."), false);
+                + " a vaincu le Gardien des profondeurs ! Recompense : " + jadeReward + " Jade par survivant ; " + rewarded + " connecte(s)."), false);
     }
 }
