@@ -37,7 +37,6 @@ public final class DeepGuardianEntity extends Ravager {
                 double length = Math.max(0.1D, Math.sqrt(dx * dx + dz * dz));
                 entity.knockback(1.8D, -dx / length, -dz / length);
             }
-            level().levelEvent(200 удар, blockPosition(), 0);
             slamCooldown = 100;
         }
     }
