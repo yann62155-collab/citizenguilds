@@ -38,7 +38,7 @@ Compilez avec Java 21/Gradle, puis placez le JAR dans le dossier `mods` du clien
 
 ## Donjons de guilde
 
-Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Les salles et les pièges sont construits dans cette dimension isolée : le terrain du monde principal n'est pas creusé ni remplacé.
+Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Après installation ou mise à jour du JAR, effectue un redémarrage complet du serveur pour charger la dimension. Les salles et les pièges sont construits dans cette dimension isolée : le terrain du monde principal n'est pas creusé ni remplacé.
 
 ### Préparer un site (administrateur)
 
