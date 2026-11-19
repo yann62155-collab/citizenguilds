@@ -25,7 +25,7 @@ public final class GuildCommands {
             }))
             .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.string()).executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
-                if(GuildSavedData.get(p.getServer()).create(p,StringArgumentType.getString(c,"nom"))==null) return fail(c.getSource(),"Tu appartiens deja a une guilde.");
+                if(GuildSavedData.get(p.getServer()).create(p,StringArgumentType.getString(c,"nom"))==null) return fail(c.getSource(),"Creation impossible : nom deja utilise, nom invalide (3 a 24 caracteres) ou tu appartiens deja a une guilde.");
                 return ok(c.getSource(),"Guilde creee. Tu en es le chef.");
             })))
             .then(Commands.literal("rename").then(Commands.argument("nom", StringArgumentType.string()).executes(c -> {
