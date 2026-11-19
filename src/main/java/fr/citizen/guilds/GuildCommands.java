@@ -119,6 +119,63 @@ public final class GuildCommands {
                     DungeonData.get(c.getSource().getServer()).clearLastSite();
                     return ok(c.getSource(), "Dernier site de donjon efface. Aucun bloc du monde n'a ete modifie.");
                 }))
+                .then(Commands.literal("portal").requires(source -> source.hasPermission(2))
+                    .then(Commands.literal("create").executes(c -> {
+                        DungeonData data = DungeonData.get(c.getSource().getServer());
+                        var site = data.lastSite();
+                        if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord /guild dungeon scan.");
+                        var level = c.getSource().getServer().overworld();
+                        if (!level.hasChunkAt(site)) return fail(c.getSource(), "Le chunk du site n'est pas charge. Rends-toi sur place puis relance.");
+                        if (!level.getBlockState(site).isAir()) return fail(c.getSource(), "L'emplacement de la porte n'est plus libre.");
+                        if (!level.getBlockState(site.above()).isAir()) return fail(c.getSource(), "L'espace au-dessus de la porte est obstrue.");
+                        level.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
+                        return ok(c.getSource(), "Porte temporaire placee en X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + ".");
+                    }))
+                    .then(Commands.literal("remove").executes(c -> {
+                        DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                        if (session.active()) return fail(c.getSource(), "Termine d'abord la session avec /guild dungeon end.");
+                        DungeonData data = DungeonData.get(c.getSource().getServer());
+                        var site = data.lastSite();
+                        if (site == null) return fail(c.getSource(), "Aucun site enregistre.");
+                        var level = c.getSource().getServer().overworld();
+                        if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                            return fail(c.getSource(), "Aucune porte Citizen n'est presente sur le site.");
+                        level.removeBlock(site, false);
+                        return ok(c.getSource(), "Porte temporaire retiree. Le terrain naturel autour n'a pas ete touche.");
+                    })))
+                .then(Commands.literal("start").requires(source -> source.hasPermission(2))
+                    .then(Commands.argument("guilde", StringArgumentType.greedyString()).executes(c -> {
+                        String name = StringArgumentType.getString(c, "guilde");
+                        var guild = GuildSavedData.get(c.getSource().getServer()).allGuilds().stream()
+                            .filter(g -> g.name.equalsIgnoreCase(name)).findFirst().orElse(null);
+                        if (guild == null) return fail(c.getSource(), "Guilde introuvable.");
+                        var site = DungeonData.get(c.getSource().getServer()).lastSite();
+                        if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord un scan.");
+                        var level = c.getSource().getServer().overworld();
+                        if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                            return fail(c.getSource(), "La porte temporaire n'est pas placee ou son chunk n'est pas charge.");
+                        DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                        if (!session.start(guild.id, guild.name, site)) return fail(c.getSource(), "Une session est deja active.");
+                        c.getSource().getServer().getPlayerList().broadcastSystemMessage(
+                            net.minecraft.network.chat.Component.literal("§6[Donjon] §fLa session de " + guild.name + " est ouverte. Les membres peuvent interagir avec la porte en X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + "."), false);
+                        return 1;
+                    })))
+                .then(Commands.literal("end").requires(source -> source.hasPermission(2)).executes(c -> {
+                    DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                    if (!session.active()) return fail(c.getSource(), "Aucune session active.");
+                    String guildName = session.guildName();
+                    var site = session.site();
+                    session.end();
+                    var level = c.getSource().getServer().overworld();
+                    if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                        level.removeBlock(site, false);
+                    return ok(c.getSource(), "Session de " + guildName + " fermee. La porte a ete retiree si son emplacement etait intact.");
+                }))
+                .then(Commands.literal("status").executes(c -> {
+                    DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                    if (!session.active()) return ok(c.getSource(), "Aucune session de donjon active.");
+                    return ok(c.getSource(), "Session " + session.guildName() + " | Participants : " + session.participantCount() + " | Encore en vie : " + session.aliveCount() + " | Porte : " + session.site().getX() + " " + session.site().getY() + " " + session.site().getZ() + ".");
+                }))
                 .then(Commands.literal("site").executes(c -> {
                     DungeonData data = DungeonData.get(c.getSource().getServer());
                     var site = data.lastSite();
