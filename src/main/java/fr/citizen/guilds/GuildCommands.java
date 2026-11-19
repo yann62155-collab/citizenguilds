@@ -74,13 +74,21 @@ public final class GuildCommands {
                     "§6[Statistiques] §f"+g.name+" | Membres: "+g.members.size()+" | Objets deposes: "+g.totalDepositedItems+" | Emplacements: "+g.bank.size()+"/54 | Donjons gagnes: "+g.dungeonWins+" | Eliminations: "+g.dungeonDeaths),false);
                 return 1;
             }))
-            .then(Commands.literal("top").executes(c -> {
-                var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
-                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Classement des guildes] §7(activité de dépôt, pas une valeur monétaire)"),false);
-                guilds.stream().sorted(java.util.Comparator.comparingLong((GuildSavedData.Guild g)->g.totalDepositedItems).reversed()).limit(10).forEach(g ->
-                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7- "+g.totalDepositedItems+" objet(s) déposé(s)"),false));
-                return 1;
-            }))
+            .then(Commands.literal("top")
+                .executes(c -> {
+                    var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
+                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Classement des guildes] §7(activité de dépôt, pas une valeur monétaire)"),false);
+                    guilds.stream().sorted(java.util.Comparator.comparingLong((GuildSavedData.Guild g)->g.totalDepositedItems).reversed()).limit(10).forEach(g ->
+                        c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7- "+g.totalDepositedItems+" objet(s) déposé(s)"),false));
+                    return 1;
+                })
+                .then(Commands.literal("dungeons").executes(c -> {
+                    var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
+                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Classement des donjons] §7(victoires de guilde)"),false);
+                    guilds.stream().sorted(java.util.Comparator.comparingInt((GuildSavedData.Guild g)->g.dungeonWins).reversed()).limit(10).forEach(g ->
+                        c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7- "+g.dungeonWins+" victoire(s) | "+g.dungeonDeaths+" élimination(s)"),false));
+                    return 1;
+                })))
             .then(Commands.literal("admin").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("list").executes(c -> {
                     var guilds=GuildSavedData.get(c.getSource().getServer()).allGuilds();
