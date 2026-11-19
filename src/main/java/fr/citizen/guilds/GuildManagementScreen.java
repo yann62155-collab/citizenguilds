@@ -51,9 +51,9 @@ public final class GuildManagementScreen extends Screen {
         switch(tab) {
             case "overview" -> {
                 primary=field(a+16,b+68,205,"Nom de la guilde");
-                action("Fonder ma guilde",a+232,b+67,210,()->run("guild create \\"" + safe(primary.getValue()) + "\\""));
+                action("Fonder ma guilde",a+232,b+67,210,()->run("guild create \"" + safe(primary.getValue()) + "\""));
                 secondary=field(a,b+258,205,"Nouveau nom de guilde");
-                action("Renommer",a+215,b+257,140,()->run("guild rename \\"" + safe(secondary.getValue()) + "\\""));
+                action("Renommer",a+215,b+257,140,()->run("guild rename \"" + safe(secondary.getValue()) + "\""));
                 action("Actualiser",a+365,b+257,95,()->GuildNetwork.requestSync());
             }
             case "members" -> {
@@ -107,7 +107,7 @@ public final class GuildManagementScreen extends Screen {
     }
     private String safe(String value) {
         String trimmed=value==null?"":value.trim();
-        return trimmed.matches("[A-Za-z0-9_\\-]{1,24}")?trimmed:"";
+        return trimmed.matches("[\\p{L}\\p{N}_ -]{3,24}")?trimmed:"";
     }
     private String number(String value,int fallback) {
         try { return Integer.toString(Math.max(1,Math.min(64,Integer.parseInt(value.trim())))); }
