@@ -115,6 +115,10 @@ public final class GuildCommands {
                         net.minecraft.network.chat.Component.literal("§6[Donjon] §fSite naturel potentiel detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld). Aucun bloc n'a ete modifie."), false);
                     return 1;
                 }))
+                .then(Commands.literal("reset").requires(source -> source.hasPermission(2)).executes(c -> {
+                    DungeonData.get(c.getSource().getServer()).clearLastSite();
+                    return ok(c.getSource(), "Dernier site de donjon efface. Aucun bloc du monde n'a ete modifie.");
+                }))
                 .then(Commands.literal("site").executes(c -> {
                     DungeonData data = DungeonData.get(c.getSource().getServer());
                     var site = data.lastSite();
