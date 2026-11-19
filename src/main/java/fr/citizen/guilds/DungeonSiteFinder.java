@@ -28,6 +28,10 @@ public final class DungeonSiteFinder {
     }
 
     public static boolean isSafeSite(ServerLevel level, BlockPos feet, int minX, int minY, int minZ) {
+        return isSafeSite(level, feet, minX, minY, minZ, null);
+    }
+
+    public static boolean isSafeSite(ServerLevel level, BlockPos feet, int minX, int minY, int minZ, ServerPlayer ignoredPlayer) {
         int x = feet.getX();
         int z = feet.getZ();
         int y = feet.getY();
@@ -37,7 +41,7 @@ public final class DungeonSiteFinder {
         if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()) return false;
         if (!isNaturalGround(level.getBlockState(feet.below()).getBlock())) return false;
         if (!naturalArea(level, x, z) || !mountainShelter(level, x, z, y)) return false;
-        if (nearAnyPlayer(level, feet, 64.0D)) return false;
+        if (nearAnyPlayer(level, feet, 64.0D, ignoredPlayer)) return false;
         return !DungeonProtection.isProtectedArea(level, feet);
     }
 
@@ -68,8 +72,13 @@ public final class DungeonSiteFinder {
     }
 
     private static boolean nearAnyPlayer(ServerLevel level, BlockPos pos, double radius) {
+        return nearAnyPlayer(level, pos, radius, null);
+    }
+
+    private static boolean nearAnyPlayer(ServerLevel level, BlockPos pos, double radius, ServerPlayer ignoredPlayer) {
         double limit = radius * radius;
         for (ServerPlayer player : level.players()) {
+            if (player == ignoredPlayer) continue;
             if (player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) < limit) return true;
         }
         return false;
