@@ -121,17 +121,20 @@ public final class DungeonEvents {
         if (!data.autoSpawnEnabled()) { autoSpawnSeconds = 0; return; }
         ServerLevel overworld = server.overworld();
         BlockPos previous = data.lastSite();
-        if (previous != null && overworld.hasChunkAt(previous)
-            && overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
-            long spawnedAt = data.portalSpawnGameTime();
-            if (spawnedAt > 0L && overworld.getGameTime() - spawnedAt >= 20L * 60L * 60L * 2L) {
-                overworld.removeBlock(previous, false);
-                data.clearLastSite();
-                server.getPlayerList().broadcastSystemMessage(
-                    Component.literal("§7[Donjon] Une porte ancienne s'est refermee apres deux heures d'attente."), false);
+        if (previous != null) {
+            if (!overworld.hasChunkAt(previous)) { autoSpawnSeconds = 0; return; }
+            if (overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
+                long spawnedAt = data.portalSpawnGameTime();
+                if (spawnedAt > 0L && overworld.getGameTime() - spawnedAt >= 20L * 60L * 60L * 2L) {
+                    overworld.removeBlock(previous, false);
+                    data.clearLastSite();
+                    server.getPlayerList().broadcastSystemMessage(
+                        Component.literal("§7[Donjon] Une porte ancienne s'est refermee apres deux heures d'attente."), false);
+                }
+                autoSpawnSeconds = 0;
+                return;
             }
-            autoSpawnSeconds = 0;
-            return;
+            data.clearLastSite();
         }
         int interval = data.spawnIntervalMinutes() * 60;
         if (++autoSpawnSeconds < interval) return;
