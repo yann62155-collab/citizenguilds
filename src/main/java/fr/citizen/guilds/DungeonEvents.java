@@ -28,8 +28,14 @@ public final class DungeonEvents {
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!player.serverLevel().dimension().equals(CitizenDimensions.DUNGEON)) return;
         DungeonSessionData session = DungeonSessionData.get(player.getServer());
+        int pendingJade = session.claimPendingReward(player.getUUID().toString());
+        if (pendingJade > 0) {
+            ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), pendingJade);
+            if (!player.getInventory().add(reward)) player.drop(reward, false);
+            player.sendSystemMessage(Component.literal("§a[Donjon] Recompense de reconnexion : " + pendingJade + " minerai(s) de Pierre de Jade."));
+        }
+        if (!player.serverLevel().dimension().equals(CitizenDimensions.DUNGEON)) return;
         if (session.active() && session.isParticipant(player.getUUID().toString()) && !session.isEliminated(player.getUUID().toString())) return;
         var overworld = player.getServer().overworld();
         BlockPos spawn = overworld.getSharedSpawnPos();
@@ -165,11 +171,13 @@ public final class DungeonEvents {
         data.recordDungeonWin(session.guildId());
         int rewarded = 0;
         for (String uuid : session.livingParticipantIds()) {
+            session.addPendingReward(uuid, 3);
             ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
             if (player == null) continue;
-            ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), 3);
+            int jade = session.claimPendingReward(uuid);
+            ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), jade);
             if (!player.getInventory().add(reward)) player.drop(reward, false);
-            player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Tu recois 3 minerais de Pierre de Jade."));
+            player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Tu recois " + jade + " minerais de Pierre de Jade."));
             rewarded++;
         }
         server.getPlayerList().broadcastSystemMessage(
