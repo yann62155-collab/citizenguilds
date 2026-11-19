@@ -227,7 +227,7 @@ public final class DungeonEvents {
             addMob(level, site, EntityType.HUSK, offsets[3], false, ids);
             addMob(level, site, EntityType.SPIDER, offsets[4], false, ids);
         } else if (wave == 3) {
-            addMob(level, site, EntityType.RAVAGER, offsets[0], true, ids);
+            addMob(level, site, CitizenGuildEntities.DEEP_GUARDIAN.get(), offsets[0], true, ids);
             addMob(level, site, EntityType.VINDICATOR, offsets[2], false, ids);
             addMob(level, site, EntityType.VINDICATOR, offsets[4], false, ids);
         }
@@ -248,10 +248,10 @@ public final class DungeonEvents {
             mob.setCustomName(Component.literal("§4Gardien des profondeurs"));
             mob.setCustomNameVisible(true);
             var health = mob.getAttribute(Attributes.MAX_HEALTH);
-            if (health != null) health.setBaseValue(120.0D);
+            if (health != null) health.setBaseValue(180.0D);
             var damage = mob.getAttribute(Attributes.ATTACK_DAMAGE);
-            if (damage != null) damage.setBaseValue(14.0D);
-            mob.setHealth(120.0F);
+            if (damage != null) damage.setBaseValue(16.0D);
+            mob.setHealth(180.0F);
         }
         if (level.addFreshEntity(mob)) ids.add(mob.getUUID().toString());
     }
