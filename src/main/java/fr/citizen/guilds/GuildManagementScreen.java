@@ -164,7 +164,8 @@ public final class GuildManagementScreen extends Screen {
             case "admin" -> renderAdmin(g,x,y);
             default -> renderOverview(g,x,y);
         }
-        g.drawString(font,"CITIZEN GUILDS  •  Les changements sont validés par le serveur",x+176,y+370,MUTED,false);
+        // Keep the footer inside the sidebar: the old footer crossed the bottom action row.
+        g.drawString(font,"CITIZEN GUILDS",x+18,y+370,GOLD_DARK,false);
     }
     private String tabTitle() {
         return switch(tab) {
