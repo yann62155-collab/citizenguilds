@@ -16,9 +16,9 @@ public final class GuildSavedData extends SavedData {
     private final Map<String, Guild> guilds = new LinkedHashMap<>();
     private final Map<String, String> membership = new HashMap<>();
     private final Map<String, String> invitations = new HashMap<>();
-    private String jadeItemId = "citizenguilds:raw_jade";
-    public String getJadeItemId() { return jadeItemId; }
-    public void setJadeItemId(String id) { jadeItemId = id; setDirty(); }
+    private String autoDepositItemId = "citizenguilds:raw_jade";
+    public String getAutoDepositItemId() { return autoDepositItemId; }
+    public void setAutoDepositItemId(String id) { autoDepositItemId = id; setDirty(); }
 
     public static GuildSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -27,7 +27,8 @@ public final class GuildSavedData extends SavedData {
 
     public static GuildSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         GuildSavedData data = new GuildSavedData();
-        if (tag.contains("jadeItemId")) data.jadeItemId = tag.getString("jadeItemId");
+        if (tag.contains("autoDepositItemId")) data.autoDepositItemId = tag.getString("autoDepositItemId");
+        else if (tag.contains("jadeItemId")) data.autoDepositItemId = tag.getString("jadeItemId"); // Migration des anciennes sauvegardes.
         ListTag list = tag.getList("guilds", CompoundTag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
@@ -47,7 +48,7 @@ public final class GuildSavedData extends SavedData {
         ListTag list = new ListTag();
         for (Guild guild : guilds.values()) list.add(guild.save(registries));
         tag.put("guilds", list);
-        tag.putString("jadeItemId", jadeItemId);
+        tag.putString("autoDepositItemId", autoDepositItemId);
         ListTag invites = new ListTag();
         invitations.forEach((player, guild) -> {
             CompoundTag invite = new CompoundTag();
@@ -137,12 +138,12 @@ public final class GuildSavedData extends SavedData {
         guild.log(target.getGameProfile().getName() + " est maintenant " + guild.roles.get(uuid));
         setDirty(); return true;
     }
-    public void autoDepositJade(ServerPlayer player, int amount) {
+    public void autoDepositResource(ServerPlayer player, int amount) {
         if (amount <= 0 || guildOf(player) == null) return;
         int remaining = amount;
         for (int slot = 0; slot < player.getInventory().getContainerSize() && remaining > 0; slot++) {
             ItemStack carried = player.getInventory().getItem(slot);
-            if (carried.isEmpty() || !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(carried.getItem()).toString().equals(jadeItemId)) continue;
+            if (carried.isEmpty() || !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(carried.getItem()).toString().equals(autoDepositItemId)) continue;
             int moved = Math.min(remaining, carried.getCount());
             ItemStack part = carried.copyWithCount(moved);
             if (deposit(player, part)) {
