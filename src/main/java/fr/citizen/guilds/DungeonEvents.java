@@ -12,7 +12,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -107,7 +106,7 @@ public final class DungeonEvents {
 
     private static void addMob(ServerLevel level, BlockPos site, EntityType<? extends Mob> type,
                                int[] offset, boolean boss, List<String> ids) {
-        BlockPos spawn = site.offset(offset[0], 1, offset[1]);
+        BlockPos spawn = site.offset(offset[0], 0, offset[1]);
         if (!level.hasChunkAt(spawn) || !level.getBlockState(spawn).isAir()
             || !level.getBlockState(spawn.above()).isAir()) return;
         Mob mob = type.create(level);
