@@ -5,6 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.Mob;
@@ -45,11 +46,11 @@ public final class DungeonArena {
 
         // The entrance chamber and return gate.
         put(level, new BlockPos(0, FLOOR_Y + 1, 7), CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState());
-        lantern(level, -7, FLOOR_Y + 4, 0);
+        lantern(level, -7, FLOOR_Y + 5, 0);
         lantern(level, 7, FLOOR_Y + 4, 0);
-        lantern(level, -9, FLOOR_Y + 4, -34);
+        lantern(level, -9, FLOOR_Y + 5, -34);
         lantern(level, 9, FLOOR_Y + 4, -34);
-        lantern(level, -11, FLOOR_Y + 4, -70);
+        lantern(level, -11, FLOOR_Y + 5, -70);
         lantern(level, 11, FLOOR_Y + 4, -70);
 
         // Marked floor traps in the middle chamber.
