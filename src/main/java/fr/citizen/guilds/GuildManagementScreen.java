@@ -28,7 +28,7 @@ public final class GuildManagementScreen extends Screen {
         GuildNetwork.requestSync();
         nav("Vue d'ensemble","overview",sx,sy);
         nav("Membres","members",sx,sy+38);
-        nav("Banque de guilde","bank",sx,sy+76);
+        nav("Réserve de ressources","bank",sx,sy+76);
         nav("Armure de Jade","jade",sx,sy+114);
         nav("Activites","activities",sx,sy+152);
         nav("Journal","journal",sx,sy+190);
@@ -69,7 +69,7 @@ public final class GuildManagementScreen extends Screen {
                 primary=field(a,b+248,90,"Emplacement");
                 secondary=field(a+100,b+248,90,"Quantité");
                 action("Retirer",a+200,b+247,100,()->run("guild withdraw "+number(primary.getValue(),1)+" "+number(secondary.getValue(),64)));
-                action("Voir la banque",a+310,b+247,150,()->GuildNetwork.requestSync());
+                action("Voir la réserve",a+310,b+247,150,()->GuildNetwork.requestSync());
             }
             case "journal" -> action("Actualiser le journal",a,b+300,170,()->GuildNetwork.requestSync());
             case "activities" -> action("Voir les informations",a,b+250,170,()->run("guild info"));
@@ -145,7 +145,7 @@ public final class GuildManagementScreen extends Screen {
         g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? "Membres : "+snapshot.get("memberCount").getAsInt() : "Saisissez un nom puis utilisez le bouton pour la creer.",a+16,b+54,MUTED,false);
         card(g,a,b+108,142,82,"MEMBRES","/guild info","Effectif et grades");
         card(g,a+153,b+108,142,82,"ARMURE DE JADE","RARE","Butin des donjons");
-        card(g,a+306,b+108,154,82,"BANQUE","PARTAGEE","Depot et retrait");
+        card(g,a+306,b+108,154,82,"RESERVE","PARTAGEE","Stock de ressources");
         section(g,a,b+213,"ACTIONS RAPIDES","Les commandes sont executees par le serveur.");
     }
     private void renderMembers(GuiGraphics g,int x,int y) {
@@ -164,7 +164,7 @@ public final class GuildManagementScreen extends Screen {
     }
     private void renderBank(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
-        section(g,a,b,"BANQUE DE GUILDE","Depots ouverts aux membres • Retraits chef/officier");
+        section(g,a,b,"RESERVE DE RESSOURCES","Dépôts ouverts aux membres • Retraits chef/officier");
         com.google.gson.JsonArray items=snapshot.has("bank")?snapshot.getAsJsonArray("bank"):new com.google.gson.JsonArray();
         int yy=b+43;
         for(int i=0;i<Math.min(8,items.size());i++){
@@ -174,15 +174,15 @@ public final class GuildManagementScreen extends Screen {
             g.drawString(font,"x"+item.get("count").getAsString(),a+410,yy+7,GOLD,false);
             yy+=25;
         }
-        if(items.isEmpty())g.drawString(font,"La banque est vide.",a,b+52,MUTED,false);
+        if(items.isEmpty())g.drawString(font,"La réserve de ressources est vide.",a,b+52,MUTED,false);
     }
     private void renderJade(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
-        section(g,a,b,"EQUIPEMENT DE JADE","Objet configuré pour les dépôts automatiques");
-        String item=snapshot.has("jadeItem")?snapshot.get("jadeItem").getAsString():"citizenguilds:raw_jade";
-        card(g,a,b+45,220,90,"OBJET DE JADE",item,"Configuré par un administrateur");
+        section(g,a,b,"MINERAIS & FABRICATION","Ressource configurée pour le dépôt automatique");
+        String item=snapshot.has("autoDepositItem")?snapshot.get("autoDepositItem").getAsString():"citizenguilds:raw_jade";
+        card(g,a,b+45,220,90,"RESSOURCE CONFIGUREE",item,"Choisie par un administrateur");
         card(g,a+235,b+45,225,90,"FABRICATION","LINGOT","Four / haut-fourneau puis armure");
-        g.drawString(font,"Le ramassage de cet objet alimente automatiquement la banque de guilde.",a,b+158,MUTED,false);
+        g.drawString(font,"Le ramassage de cette ressource alimente automatiquement la réserve de ressources.",a,b+158,MUTED,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
@@ -191,15 +191,15 @@ public final class GuildManagementScreen extends Screen {
         int bank=snapshot.has("bank")?snapshot.getAsJsonArray("bank").size():0;
         int journal=snapshot.has("journal")?snapshot.getAsJsonArray("journal").size():0;
         card(g,a,b+45,142,90,"MEMBRES",Integer.toString(members),"Effectif actuel");
-        card(g,a+153,b+45,142,90,"BANQUE",Integer.toString(bank)+"/54","Emplacements occupes");
+        card(g,a+153,b+45,142,90,"STOCK",Integer.toString(bank)+"/54","Emplacements occupes");
         card(g,a+306,b+45,154,90,"JOURNAL",Integer.toString(journal),"Evenements conserves");
         g.drawString(font,"Les statistiques se mettent a jour avec la synchronisation serveur.",a,b+158,MUTED,false);
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
         String[] lines={"/guild create <nom> - Fonder une guilde","/guild invite <joueur> - Inviter un joueur",
-            "/guild accept - Accepter une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main",
-            "/guild withdraw <slot> [quantite] - Retirer du coffre","/guild promote <joueur> - Changer le grade",
+            "/guild accept - Accepter une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main dans la réserve",
+            "/guild withdraw <slot> [quantite] - Retirer de la réserve","/guild promote <joueur> - Changer le grade",
             "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre"};
         int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
     }
