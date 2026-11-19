@@ -60,6 +60,12 @@ public final class GuildSavedData extends SavedData {
         return tag;
     }
 
+    /** Returns the guild that has invited this player, if any. */
+    public Guild pendingInvitationFor(ServerPlayer player) {
+        String guildId = invitations.get(player.getUUID().toString());
+        return guildId == null ? null : guilds.get(guildId);
+    }
+
     public Guild guildOf(ServerPlayer player) {
         String id = membership.get(player.getUUID().toString());
         return id == null ? null : guilds.get(id);
