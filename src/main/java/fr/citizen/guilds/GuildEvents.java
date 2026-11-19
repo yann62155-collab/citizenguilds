@@ -1,9 +1,20 @@
 package fr.citizen.guilds;
 
-/**
- * Jade is an equipment material, not a guild currency.
- * Dungeon distribution is handled by JadeDungeonLoot.
- */
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
+
+/** Automatically routes configured Jade pickups into the guild treasury. */
+@EventBusSubscriber(modid = CitizenGuilds.MOD_ID)
 public final class GuildEvents {
     private GuildEvents() {}
+
+    @SubscribeEvent
+    public static void onItemPickup(ItemEntityPickupEvent.Post event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
+        int pickedUp = event.getOriginalStack().getCount() - event.getCurrentStack().getCount();
+        if (pickedUp <= 0) return;
+        GuildSavedData.get(player.getServer()).autoDepositJade(player, pickedUp);
+    }
 }
