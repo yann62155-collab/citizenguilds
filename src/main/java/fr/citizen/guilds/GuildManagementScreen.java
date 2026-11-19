@@ -27,12 +27,13 @@ public final class GuildManagementScreen extends Screen {
         int sx=x+14, sy=y+104;
         GuildNetwork.requestSync();
         nav("Vue d'ensemble","overview",sx,sy);
-        nav("Membres","members",sx,sy+38);
-        nav("Réserve de ressources","bank",sx,sy+76);
-        nav("Armure de Jade","jade",sx,sy+114);
-        nav("Activites","activities",sx,sy+152);
-        nav("Journal","journal",sx,sy+190);
-        nav("Commandes","help",sx,sy+228);
+        nav("Membres","members",sx,sy+34);
+        nav("Réserve","bank",sx,sy+68);
+        nav("Armure de Jade","jade",sx,sy+102);
+        nav("Activites","activities",sx,sy+136);
+        nav("Journal","journal",sx,sy+170);
+        nav("Commandes","help",sx,sy+204);
+        if(snapshot.has("isAdmin") && snapshot.get("isAdmin").getAsBoolean()) nav("Administration","admin",sx,sy+238);
         addRenderableWidget(Button.builder(Component.literal("✕"), b -> onClose()).bounds(x+615,y+14,24,22).build());
         buildTabControls(x,y);
     }
@@ -78,6 +79,11 @@ public final class GuildManagementScreen extends Screen {
                 action("Créer une guilde",a,b+295,145,()->{tab="overview";clearWidgets();init();});
                 action("Afficher les membres",a+153,b+295,160,()->run("guild info"));
             }
+            case "admin" -> {
+                primary=field(a,b+208,205,"Nom exact de la guilde");
+                action("Lister les guildes",a+215,b+207,145,()->run("guild admin list"));
+                action("Dissoudre la guilde",a,b+247,180,()->run("guild admin disband \\""+safe(primary.getValue())+"\\""));
+            }
         }
     }
 
@@ -92,7 +98,10 @@ public final class GuildManagementScreen extends Screen {
     }
     private void run(String command) {
         Minecraft mc=Minecraft.getInstance();
-        if(mc.player!=null && !command.contains("null") && !command.endsWith(" ")) mc.player.connection.sendCommand(command);
+        if(mc.player!=null && !command.contains("null") && !command.endsWith(" ")) {
+            mc.player.connection.sendCommand(command);
+            GuildNetwork.requestSync();
+        }
     }
     private String safe(String value) {
         String trimmed=value==null?"":value.trim();
@@ -190,10 +199,12 @@ public final class GuildManagementScreen extends Screen {
         int members=snapshot.has("memberCount")?snapshot.get("memberCount").getAsInt():0;
         int bank=snapshot.has("bank")?snapshot.getAsJsonArray("bank").size():0;
         int journal=snapshot.has("journal")?snapshot.getAsJsonArray("journal").size():0;
+        long deposited=snapshot.has("totalDepositedItems")?snapshot.get("totalDepositedItems").getAsLong():0L;
+        int wins=snapshot.has("dungeonWins")?snapshot.get("dungeonWins").getAsInt():0;
         card(g,a,b+45,142,90,"MEMBRES",Integer.toString(members),"Effectif actuel");
-        card(g,a+153,b+45,142,90,"STOCK",Integer.toString(bank)+"/54","Emplacements occupes");
-        card(g,a+306,b+45,154,90,"JOURNAL",Integer.toString(journal),"Evenements conserves");
-        g.drawString(font,"Les statistiques se mettent a jour avec la synchronisation serveur.",a,b+158,MUTED,false);
+        card(g,a+153,b+45,142,90,"DEPOTS",Long.toString(deposited),"Objets deposes");
+        card(g,a+306,b+45,154,90,"DONJONS",Integer.toString(wins),"Victoires enregistrees");
+        g.drawString(font,"Emplacements occupes dans la reserve : "+bank+"/54 • Journal : "+journal+" entree(s).",a,b+158,MUTED,false);
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
