@@ -5,7 +5,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
-import net.minecraft.world.level.storage.loot.predicates.RandomChanceCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
@@ -23,7 +23,7 @@ public final class JadeDungeonLoot {
 
         LootPool jadePool = LootPool.lootPool()
             .setRolls(ConstantValue.exactly(1))
-            .when(RandomChanceCondition.randomChance(0.12F))
+            .when(LootItemRandomChanceCondition.randomChance(0.12F))
             .add(LootItem.lootTableItem(CitizenJadeItems.RAW_JADE.get())
                 .setWeight(1)
                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
