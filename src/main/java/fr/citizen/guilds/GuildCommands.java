@@ -158,6 +158,7 @@ public final class GuildCommands {
                         if (!level.getBlockState(site).isAir()) return fail(c.getSource(), "L'emplacement de la porte n'est plus libre.");
                         if (!level.getBlockState(site.above()).isAir()) return fail(c.getSource(), "L'espace au-dessus de la porte est obstrue.");
                         level.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
+                        data.setPortalSpawnGameTime(level.getGameTime());
                         c.getSource().getServer().getPlayerList().broadcastSystemMessage(
                             net.minecraft.network.chat.Component.literal("§6[Donjon] §fUne porte ancienne vient d'apparaitre : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld)."), false);
                         return ok(c.getSource(), "Porte temporaire placee en X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + ".");
@@ -172,6 +173,7 @@ public final class GuildCommands {
                         if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                             return fail(c.getSource(), "Aucune porte Citizen n'est presente sur le site.");
                         level.removeBlock(site, false);
+                        data.clearLastSite();
                         return ok(c.getSource(), "Porte temporaire retiree. Le terrain naturel autour n'a pas ete touche.");
                     })))
                 .then(Commands.literal("start").requires(source -> source.hasPermission(2))
@@ -214,6 +216,7 @@ public final class GuildCommands {
                     var level = overworld;
                     if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                         level.removeBlock(site, false);
+                    DungeonData.get(c.getSource().getServer()).clearLastSite();
                     return ok(c.getSource(), "Session de " + guildName + " fermee. La porte a ete retiree si son emplacement etait intact.");
                 }))
                 .then(Commands.literal("status").executes(c -> {
