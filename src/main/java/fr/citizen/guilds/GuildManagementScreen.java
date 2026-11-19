@@ -6,6 +6,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /** Dark-fantasy guild interface with real server-command actions. */
 public final class GuildManagementScreen extends Screen {
@@ -14,6 +16,8 @@ public final class GuildManagementScreen extends Screen {
     private static final int WHITE=0xFFF4F0E8, MUTED=0xFF9CA6B8, LINE=0xFF343B49;
     private String tab="overview";
     private EditBox primary, secondary;
+    private static JsonObject snapshot = new JsonObject();
+    public static void acceptSnapshot(String json) { try { snapshot = JsonParser.parseString(json).getAsJsonObject(); } catch (Exception ignored) { snapshot = new JsonObject(); } }
 
     public GuildManagementScreen() { super(Component.translatable("screen.citizenguilds.title")); }
     @Override public boolean isPauseScreen() { return false; }
@@ -21,6 +25,7 @@ public final class GuildManagementScreen extends Screen {
     @Override protected void init() {
         int x=(width-650)/2, y=(height-390)/2;
         int sx=x+14, sy=y+104;
+        GuildNetwork.requestSync();
         nav("Vue d'ensemble","overview",sx,sy);
         nav("Membres","members",sx,sy+38);
         nav("Banque de guilde","bank",sx,sy+76);
@@ -46,7 +51,7 @@ public final class GuildManagementScreen extends Screen {
             case "overview" -> {
                 primary=field(a+16,b+68,205,"Nom de la guilde");
                 action("Fonder ma guilde",a+232,b+67,210,()->run("guild create "+safe(primary.getValue())));
-                action("Voir ma guilde",a,b+315,140,()->run("guild info"));
+                action("Voir ma guilde",a,b+315,140,()->GuildNetwork.requestSync());
             }
             case "members" -> {
                 primary=field(a,b+208,205,"Pseudo du joueur");
@@ -64,11 +69,11 @@ public final class GuildManagementScreen extends Screen {
                 primary=field(a,b+248,90,"Emplacement");
                 secondary=field(a+100,b+248,90,"Quantité");
                 action("Retirer",a+200,b+247,100,()->run("guild withdraw "+number(primary.getValue(),1)+" "+number(secondary.getValue(),64)));
-                action("Voir la banque",a+310,b+247,150,()->run("guild bank"));
+                action("Voir la banque",a+310,b+247,150,()->GuildNetwork.requestSync());
             }
-            case "journal" -> action("Actualiser le journal",a,b+300,170,()->run("guild journal"));
+            case "journal" -> action("Actualiser le journal",a,b+300,170,()->GuildNetwork.requestSync());
             case "activities" -> action("Voir les informations",a,b+250,170,()->run("guild info"));
-            case "jade" -> action("Voir les recettes",a,b+250,170,()->run("guild jadeinfo"));
+            case "jade" -> action("Voir les recettes",a,b+250,170,()->GuildNetwork.requestSync());
             case "help" -> {
                 action("Créer une guilde",a,b+295,145,()->{tab="overview";clearWidgets();init();});
                 action("Afficher les membres",a+153,b+295,160,()->run("guild info"));
@@ -109,7 +114,7 @@ public final class GuildManagementScreen extends Screen {
         g.drawString(font,"CHRONIQUES & COMPAGNIES",x+18,y+61,MUTED,false);
         g.fill(x+14,y+83,x+143,y+84,LINE);
         g.drawString(font,"ESPACE DE GUILDE",x+176,y+20,MUTED,false);
-        g.drawString(font,"Le sanctuaire des compagnons",x+176,y+39,WHITE,false);
+        g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? snapshot.get("name").getAsString() : "Le sanctuaire des compagnons",x+176,y+39,WHITE,false);
         g.drawString(font,"ACTIONS CONNECTEES AU SERVEUR",x+176,y+59,GOLD,false);
         g.fill(x+174,y+78,x+636,y+79,LINE);
         super.render(g,mouseX,mouseY,partialTick);
@@ -136,8 +141,8 @@ public final class GuildManagementScreen extends Screen {
         int a=x+176,b=y+98;
         g.fill(a,b,a+460,b+94,PANEL_ALT); g.renderOutline(a,b,460,94,GOLD_DARK);
         g.drawString(font,"VOTRE HISTOIRE COMMENCE ICI",a+16,b+14,GOLD,false);
-        g.drawString(font,"Fondez une guilde et rassemblez vos allies.",a+16,b+37,WHITE,false);
-        g.drawString(font,"Saisissez un nom puis utilisez le bouton pour la creer.",a+16,b+54,MUTED,false);
+        g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? "Votre guilde : "+snapshot.get("name").getAsString() : "Fondez une guilde et rassemblez vos allies.",a+16,b+37,WHITE,false);
+        g.drawString(font,snapshot.has("hasGuild") && snapshot.get("hasGuild").getAsBoolean() ? "Membres : "+snapshot.get("memberCount").getAsInt() : "Saisissez un nom puis utilisez le bouton pour la creer.",a+16,b+54,MUTED,false);
         card(g,a,b+108,142,82,"MEMBRES","/guild info","Effectif et grades");
         card(g,a+153,b+108,142,82,"ARMURE DE JADE","RARE","Butin des donjons");
         card(g,a+306,b+108,154,82,"BANQUE","PARTAGEE","Depot et retrait");
