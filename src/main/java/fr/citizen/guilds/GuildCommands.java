@@ -77,7 +77,7 @@ public final class GuildCommands {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
                 if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
-                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Guildes] §fBanque de "+g.name+" ("+g.bank.size()+" emplacements)"),false);
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Guildes] §fRéserve de ressources de "+g.name+" ("+g.bank.size()+" emplacements)"),false);
                 for(int i=0;i<g.bank.size();i++){
                     ItemStack stack=g.bank.get(i);
                     final int slot=i+1;
@@ -91,12 +91,12 @@ public final class GuildCommands {
                     net.minecraft.resources.ResourceLocation key = net.minecraft.resources.ResourceLocation.tryParse(id);
                     if (key == null || !net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(key))
                         return fail(c.getSource(), "Identifiant d'objet invalide ou inconnu.");
-                    GuildSavedData.get(c.getSource().getServer()).setJadeItemId(key.toString());
-                    return ok(c.getSource(), "Objet de Jade configure : " + key + ". Les prochains ramassages seront verses a la banque de guilde.");
+                    GuildSavedData.get(c.getSource().getServer()).setAutoDepositItemId(key.toString());
+                    return ok(c.getSource(), "Ressource configuree : " + key + ". Les prochains ramassages alimenteront la reserve de ressources de guilde.");
                 })))
             .then(Commands.literal("jadeinfo").executes(c -> {
                 c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal(
-                    "§6[Guildes] §fPierre de Jade : raw_jade -> four/haut-fourneau -> jade_ingot -> armure complète."),false);
+                    "§6[Guildes] §fLa Pierre de Jade est un minerai de fabrication : raw_jade -> four/haut-fourneau -> jade_ingot -> armure complète. Aucune valeur monétaire."),false);
                 return 1;
             }))
             .then(Commands.literal("disband").executes(c -> {
