@@ -85,7 +85,7 @@ public final class GuildCommands {
                     guilds.forEach(g->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+g.name+" §7| "+g.members.size()+" membre(s) | "+g.id),false));
                     return 1;
                 }))
-                .then(Commands.literal("disband").then(Commands.argument("nom",StringArgumentType.string()).executes(c -> {
+                .then(Commands.literal("disband").then(Commands.argument("nom",StringArgumentType.word()).executes(c -> {
                     String name=StringArgumentType.getString(c,"nom");
                     return GuildSavedData.get(c.getSource().getServer()).adminDisband(name)
                         ?ok(c.getSource(),"Guilde "+name+" supprimee par administration.")
