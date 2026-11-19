@@ -1,23 +1,147 @@
 package fr.citizen.guilds;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = CitizenGuilds.MOD_ID)
 public final class DungeonEvents {
+    private static final String MOB_TAG = "citizenguilds_dungeon_mob";
+    private static int tickCounter;
     private DungeonEvents() {}
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (player.getServer() == null) return;
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.getServer() == null) return;
         DungeonSessionData session = DungeonSessionData.get(player.getServer());
         if (!session.eliminate(player)) return;
+        GuildSavedData.get(player.getServer()).recordDungeonDeath(session.guildId(), player.getGameProfile().getName());
         player.getServer().getPlayerList().broadcastSystemMessage(
             Component.literal("§c[Donjon] §f" + player.getGameProfile().getName()
                 + " est elimine de la session de " + session.guildName() + " (une seule vie)."), false);
+        if (session.aliveCount() == 0) {
+            session.finish(false);
+            player.getServer().getPlayerList().broadcastSystemMessage(
+                Component.literal("§c[Donjon] Toute l'equipe a ete eliminee. La session est un echec."), false);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (++tickCounter < 20) return;
+        tickCounter = 0;
+        MinecraftServer server = event.getServer();
+        DungeonSessionData session = DungeonSessionData.get(server);
+        if (!session.active() || session.finished() || session.site() == null || session.participantCount() == 0) return;
+        if (session.aliveCount() == 0) {
+            session.finish(false);
+            server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
+            return;
+        }
+        ServerLevel level = server.overworld();
+        if (!level.hasChunkAt(session.site())) return;
+
+        if (session.wavePending()) {
+            if (session.wave() == 0) session.nextWave();
+            List<String> spawned = spawnWave(level, session.site(), session.wave());
+            session.setWaveMobs(spawned);
+            server.getPlayerList().broadcastSystemMessage(
+                Component.literal("§6[Donjon] §fVague " + session.wave() + "/3 : " + spawned.size() + " adversaire(s) apparaissent."), false);
+            if (spawned.isEmpty()) {
+                session.finish(false);
+                server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Impossible de faire apparaitre les creatures. Session arretee."), false);
+            }
+            return;
+        }
+
+        int remaining = session.pruneMobIds(level);
+        if (remaining > 0) return;
+        if (session.wave() < 3) {
+            session.nextWave();
+            server.getPlayerList().broadcastSystemMessage(
+                Component.literal("§e[Donjon] Vague terminee. La prochaine approche..."), false);
+            return;
+        }
+        completeVictory(server, session);
+    }
+
+    private static List<String> spawnWave(ServerLevel level, BlockPos site, int wave) {
+        List<String> ids = new ArrayList<>();
+        int localX = Math.floorMod(site.getX(), 16);
+        int localZ = Math.floorMod(site.getZ(), 16);
+        int sx = localX < 8 ? 1 : -1;
+        int sz = localZ < 8 ? 1 : -1;
+        int[][] offsets = {{sx * 2, 0}, {0, sz * 2}, {sx * 3, sz * 2}, {sx * 2, sz * 3}, {sx * 3, sz * 3}, {sx, sz * 4}};
+        if (wave == 1) {
+            addMob(level, site, EntityType.ZOMBIE, offsets[0], false, ids);
+            addMob(level, site, EntityType.ZOMBIE, offsets[1], false, ids);
+            addMob(level, site, EntityType.ZOMBIE, offsets[2], false, ids);
+            addMob(level, site, EntityType.SPIDER, offsets[3], false, ids);
+        } else if (wave == 2) {
+            addMob(level, site, EntityType.SKELETON, offsets[0], false, ids);
+            addMob(level, site, EntityType.SKELETON, offsets[1], false, ids);
+            addMob(level, site, EntityType.HUSK, offsets[2], false, ids);
+            addMob(level, site, EntityType.HUSK, offsets[3], false, ids);
+            addMob(level, site, EntityType.SPIDER, offsets[4], false, ids);
+        } else if (wave == 3) {
+            addMob(level, site, EntityType.RAVAGER, offsets[0], true, ids);
+            addMob(level, site, EntityType.VINDICATOR, offsets[2], false, ids);
+            addMob(level, site, EntityType.VINDICATOR, offsets[4], false, ids);
+        }
+        return ids;
+    }
+
+    private static void addMob(ServerLevel level, BlockPos site, EntityType<? extends Mob> type,
+                               int[] offset, boolean boss, List<String> ids) {
+        BlockPos spawn = site.offset(offset[0], 1, offset[1]);
+        if (!level.hasChunkAt(spawn) || !level.getBlockState(spawn).isAir()
+            || !level.getBlockState(spawn.above()).isAir()) return;
+        Mob mob = type.create(level);
+        if (mob == null) return;
+        mob.moveTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
+        mob.addTag(MOB_TAG);
+        mob.setPersistenceRequired();
+        if (boss) {
+            mob.setCustomName(Component.literal("§4Gardien des profondeurs"));
+            mob.setCustomNameVisible(true);
+            var health = mob.getAttribute(Attributes.MAX_HEALTH);
+            if (health != null) health.setBaseValue(120.0D);
+            var damage = mob.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (damage != null) damage.setBaseValue(14.0D);
+            mob.setHealth(120.0F);
+        }
+        if (level.addFreshEntity(mob)) ids.add(mob.getUUID().toString());
+    }
+
+    private static void completeVictory(MinecraftServer server, DungeonSessionData session) {
+        session.finish(true);
+        GuildSavedData data = GuildSavedData.get(server);
+        data.recordDungeonWin(session.guildId());
+        int rewarded = 0;
+        for (String uuid : session.livingParticipantIds()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
+            if (player == null) continue;
+            ItemStack reward = new ItemStack(CitizenJadeItems.RAW_JADE.get(), 3);
+            if (!player.getInventory().add(reward)) player.drop(reward, false);
+            player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Tu recois 3 minerais de Pierre de Jade."));
+            rewarded++;
+        }
+        server.getPlayerList().broadcastSystemMessage(
+            Component.literal("§6[Donjon] §aLa guilde " + session.guildName()
+                + " a vaincu le Gardien des profondeurs ! " + rewarded + " aventurier(s) connecte(s) recompense(s)."), false);
     }
 }
