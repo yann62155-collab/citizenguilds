@@ -15,8 +15,8 @@ public final class DungeonPortalStructure {
     private static Map<BlockPos, Block> layout(BlockPos ground) {
         Map<BlockPos, Block> blocks = new LinkedHashMap<>();
         // Heavy basalt foundation and two monumental side pillars.
-        for (int x = -2; x <= 2; x++) blocks.put(ground.offset(x, -1, 0), Blocks.POLISHED_DEEPSLATE);
-        for (int y = 0; y <= 4; y++) {
+        for (int x = -2; x <= 2; x++) blocks.put(ground.offset(x, 0, 0), Blocks.POLISHED_DEEPSLATE);
+        for (int y = 1; y <= 4; y++) {
             blocks.put(ground.offset(-2, y, 0), y == 4 ? Blocks.CHISELED_POLISHED_BLACKSTONE : Blocks.POLISHED_BLACKSTONE_BRICKS);
             blocks.put(ground.offset(2, y, 0), y == 4 ? Blocks.CHISELED_POLISHED_BLACKSTONE : Blocks.POLISHED_BLACKSTONE_BRICKS);
         }
