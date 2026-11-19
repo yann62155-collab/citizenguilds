@@ -19,6 +19,22 @@ public final class DungeonPortalBlock extends Block {
         if (level.isClientSide) return InteractionResult.SUCCESS;
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
         DungeonSessionData session = DungeonSessionData.get(serverPlayer.getServer());
+        if (level.dimension().equals(CitizenDimensions.DUNGEON)) {
+            if (!session.active() || session.site() == null || !session.isParticipant(serverPlayer.getUUID().toString())) {
+                serverPlayer.teleportTo(serverPlayer.getServer().overworld(),
+                    serverPlayer.getServer().overworld().getSharedSpawnPos().getX() + 0.5D,
+                    serverPlayer.getServer().overworld().getSharedSpawnPos().getY(),
+                    serverPlayer.getServer().overworld().getSharedSpawnPos().getZ() + 0.5D,
+                    serverPlayer.getYRot(), serverPlayer.getXRot());
+                return InteractionResult.CONSUME;
+            }
+            BlockPos exit = session.site();
+            serverPlayer.teleportTo(serverPlayer.getServer().overworld(),
+                exit.getX() + 2.5D, exit.getY(), exit.getZ() + 2.5D,
+                serverPlayer.getYRot(), serverPlayer.getXRot());
+            serverPlayer.sendSystemMessage(Component.literal("§6[Donjon] Tu as quitte l'instance. Tant que tu n'es pas elimine, tu peux y retourner par la porte."));
+            return InteractionResult.CONSUME;
+        }
         if (!session.active()) {
             serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Aucun donjon n'est actuellement ouvert."));
             return InteractionResult.CONSUME;
@@ -39,7 +55,15 @@ public final class DungeonPortalBlock extends Block {
             serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Seuls les membres de la guilde inscrite peuvent entrer."));
             return InteractionResult.CONSUME;
         }
-        serverPlayer.sendSystemMessage(Component.literal("§6[Donjon] §fInscription validee pour la guilde " + session.guildName() + ". Une seule vie : ta mort t'eliminera de cette session."));
+        ServerLevel dungeon = serverPlayer.getServer().getLevel(CitizenDimensions.DUNGEON);
+        if (dungeon == null) {
+            serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Le monde instancie n'est pas charge. Redemarre le serveur apres installation de la mise a jour."));
+            return InteractionResult.CONSUME;
+        }
+        BlockPos entrance = DungeonArena.entrance();
+        serverPlayer.teleportTo(dungeon, entrance.getX() + 0.5D, entrance.getY(), entrance.getZ() + 0.5D,
+            serverPlayer.getYRot(), serverPlayer.getXRot());
+        serverPlayer.sendSystemMessage(Component.literal("§6[Donjon] §fTu entres dans l'instance de " + session.guildName() + ". Une seule vie : ta mort t'eliminera de cette session."));
         return InteractionResult.CONSUME;
     }
 }
