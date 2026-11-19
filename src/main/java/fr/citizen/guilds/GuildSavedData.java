@@ -77,6 +77,18 @@ public final class GuildSavedData extends SavedData {
         setDirty();
         return guild;
     }
+    public boolean rename(ServerPlayer player, String newName) {
+        Guild guild = guildOf(player);
+        if (guild == null || !guild.leader.equals(player.getUUID().toString())) return false;
+        String clean = newName == null ? "" : newName.trim();
+        if (clean.length() < 3 || clean.length() > 24) return false;
+        String old = guild.name;
+        guild.name = clean;
+        guild.log("La guilde a ete renommee de " + old + " en " + clean);
+        setDirty();
+        return true;
+    }
+
     public boolean invite(ServerPlayer inviter, ServerPlayer target) {
         Guild guild = guildOf(inviter);
         if (guild == null || !guild.canManage(inviter.getUUID().toString())) return false;
@@ -189,7 +201,7 @@ public final class GuildSavedData extends SavedData {
     }
 
     public static final class Guild {
-        public final String id, name, leader;
+        public final String id, leader;\n        public String name;
         public final Map<String, String> members = new LinkedHashMap<>();
         public final Map<String, String> roles = new HashMap<>();
         public final List<ItemStack> bank = new ArrayList<>();
