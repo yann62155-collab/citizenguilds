@@ -49,7 +49,7 @@ public final class GuildCommands {
             .then(Commands.literal("info").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException(); GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
                 if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
-                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6"+g.name+" §7| Membres: "+g.members.size()+" | Jade: "+g.jade),false);
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6"+g.name+" §7| Membres: "+g.members.size()),false);
                 g.members.forEach((uuid,name)->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+name+" §7- "+g.roles.getOrDefault(uuid,"MEMBER")),false));
                 return 1;
             }))
