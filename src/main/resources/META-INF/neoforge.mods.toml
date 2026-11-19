@@ -19,3 +19,10 @@ type="required"
 versionRange="[1.21.1,1.22)"
 ordering="NONE"
 side="BOTH"
+
+[[dependencies.citizenguilds]]
+modId="hiboupostal"
+type="required"
+versionRange="[1.0,)"
+ordering="AFTER"
+side="BOTH"
