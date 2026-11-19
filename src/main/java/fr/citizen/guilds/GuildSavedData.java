@@ -67,6 +67,17 @@ public final class GuildSavedData extends SavedData {
     public Guild guild(String id) { return guilds.get(id); }
     public Collection<Guild> allGuilds() { return Collections.unmodifiableCollection(guilds.values()); }
 
+    /** Administrative deletion by exact guild name. */
+    public boolean adminDisband(String name) {
+        Guild target = guilds.values().stream().filter(g -> g.name.equalsIgnoreCase(name)).findFirst().orElse(null);
+        if (target == null) return false;
+        for (String uuid : target.members.keySet()) membership.remove(uuid);
+        guilds.remove(target.id);
+        invitations.values().removeIf(target.id::equals);
+        setDirty();
+        return true;
+    }
+
     public Guild create(ServerPlayer leader, String name) {
         String uuid = leader.getUUID().toString();
         if (membership.containsKey(uuid)) return null;
@@ -168,6 +179,7 @@ public final class GuildSavedData extends SavedData {
         if (remaining > freeSlots * perSlot) return false;
 
         int deposited = stack.getCount();
+        guild.totalDepositedItems += deposited;
         for (ItemStack stored : guild.bank) {
             if (!ItemStack.isSameItemSameComponents(stored, stack)) continue;
             int moved = Math.min(remaining, stored.getMaxStackSize() - stored.getCount());
@@ -208,6 +220,9 @@ public final class GuildSavedData extends SavedData {
         public final Map<String, String> roles = new HashMap<>();
         public final List<ItemStack> bank = new ArrayList<>();
         public final List<String> journal = new ArrayList<>();
+        public long totalDepositedItems;
+        public int dungeonWins;
+        public int dungeonDeaths;
         Guild(String id, String name, String leader, String leaderName) {
             this.id=id; this.name=name; this.leader=leader;
             members.put(leader, leaderName); roles.put(leader, "LEADER");
@@ -232,6 +247,9 @@ public final class GuildSavedData extends SavedData {
             ListTag items=new ListTag();
             for(ItemStack stack:bank) if(!stack.isEmpty()) items.add(stack.save(registries));
             tag.put("bank",items);
+            tag.putLong("totalDepositedItems", totalDepositedItems);
+            tag.putInt("dungeonWins", dungeonWins);
+            tag.putInt("dungeonDeaths", dungeonDeaths);
             ListTag logs=new ListTag(); for(String line:journal){CompoundTag e=new CompoundTag();e.putString("text",line);logs.add(e);}
             tag.put("journal",logs);
             return tag;
@@ -244,6 +262,9 @@ public final class GuildSavedData extends SavedData {
             for(int i=0;i<people.size();i++){CompoundTag m=people.getCompound(i);String uuid=m.getString("uuid");g.members.put(uuid,m.getString("name"));g.roles.put(uuid,m.getString("role"));}
             ListTag items=tag.getList("bank",CompoundTag.TAG_COMPOUND);
             for(int i=0;i<items.size();i++) ItemStack.parse(registries,items.getCompound(i)).ifPresent(g.bank::add);
+            g.totalDepositedItems = tag.getLong("totalDepositedItems");
+            g.dungeonWins = tag.getInt("dungeonWins");
+            g.dungeonDeaths = tag.getInt("dungeonDeaths");
             ListTag logs=tag.getList("journal",CompoundTag.TAG_COMPOUND);
             for(int i=0;i<logs.size();i++)g.journal.add(logs.getCompound(i).getString("text"));
             return g;
