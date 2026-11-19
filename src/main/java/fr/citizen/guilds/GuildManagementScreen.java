@@ -164,7 +164,7 @@ public final class GuildManagementScreen extends Screen {
     }
     private void renderBank(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
-        section(g,a,b,"RESERVE DE RESSOURCES","Dépôts ouverts aux membres • Retraits chef/officier");
+        section(g,a,b,"RESERVE DE RESSOURCES","Stock de minerais et matériaux • Dépôts membres • Retraits chef/officier");
         com.google.gson.JsonArray items=snapshot.has("bank")?snapshot.getAsJsonArray("bank"):new com.google.gson.JsonArray();
         int yy=b+43;
         for(int i=0;i<Math.min(8,items.size());i++){
