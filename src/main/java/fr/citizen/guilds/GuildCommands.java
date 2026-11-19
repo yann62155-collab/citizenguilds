@@ -165,6 +165,8 @@ public final class GuildCommands {
                     if (!session.active()) return fail(c.getSource(), "Aucune session active.");
                     String guildName = session.guildName();
                     var site = session.site();
+                    c.getSource().getServer().overworld();
+                    if (site != null) session.removeActiveMobs(c.getSource().getServer().overworld());
                     session.end();
                     var level = c.getSource().getServer().overworld();
                     if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
@@ -174,7 +176,8 @@ public final class GuildCommands {
                 .then(Commands.literal("status").executes(c -> {
                     DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
                     if (!session.active()) return ok(c.getSource(), "Aucune session de donjon active.");
-                    return ok(c.getSource(), "Session " + session.guildName() + " | Participants : " + session.participantCount() + " | Encore en vie : " + session.aliveCount() + " | Porte : " + session.site().getX() + " " + session.site().getY() + " " + session.site().getZ() + ".");
+                    String state = session.finished() ? (session.victory() ? "VICTOIRE" : "ECHEC") : "EN COURS";
+                    return ok(c.getSource(), "Session " + session.guildName() + " | Etat : " + state + " | Vague : " + session.wave() + "/3 | Participants : " + session.participantCount() + " | Encore en vie : " + session.aliveCount() + " | Porte : " + session.site().getX() + " " + session.site().getY() + " " + session.site().getZ() + ".");
                 }))
                 .then(Commands.literal("site").executes(c -> {
                     DungeonData data = DungeonData.get(c.getSource().getServer());
