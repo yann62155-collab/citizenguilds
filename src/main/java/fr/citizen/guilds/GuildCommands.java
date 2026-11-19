@@ -145,8 +145,15 @@ public final class GuildCommands {
                     return 1;
                 }))
                 .then(Commands.literal("reset").requires(source -> source.hasPermission(2)).executes(c -> {
-                    DungeonData.get(c.getSource().getServer()).clearLastSite();
-                    return ok(c.getSource(), "Dernier site de donjon efface. Aucun bloc du monde n'a ete modifie.");
+                    DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                    if (session.active()) return fail(c.getSource(), "Ferme d'abord la session active.");
+                    DungeonData data = DungeonData.get(c.getSource().getServer());
+                    var site = data.lastSite();
+                    var level = c.getSource().getServer().overworld();
+                    if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                        level.removeBlock(site, false);
+                    data.clearLastSite();
+                    return ok(c.getSource(), "Dernier site et porte eventuelle effaces.");
                 }))
                 .then(Commands.literal("portal").requires(source -> source.hasPermission(2))
                     .then(Commands.literal("create").executes(c -> {
