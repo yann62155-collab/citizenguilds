@@ -1,15 +1,19 @@
 package fr.citizen.guilds;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Dark-fantasy guild dashboard. This first milestone is visual; server actions are not wired yet. */
+/** Dark-fantasy guild interface with real server-command actions. */
 public final class GuildManagementScreen extends Screen {
     private static final int OUTER=0xF00B0D13, SIDEBAR=0xFF11141D, PANEL=0xFF191E29;
     private static final int PANEL_ALT=0xFF202635, GOLD=0xFFE2B765, GOLD_DARK=0xFF80643A;
     private static final int WHITE=0xFFF4F0E8, MUTED=0xFF9CA6B8, LINE=0xFF343B49;
     private String tab="overview";
+    private EditBox primary, secondary;
 
     public GuildManagementScreen() { super(Component.translatable("screen.citizenguilds.title")); }
     @Override public boolean isPauseScreen() { return false; }
@@ -24,34 +28,90 @@ public final class GuildManagementScreen extends Screen {
         nav("Activites","activities",sx,sy+152);
         nav("Journal","journal",sx,sy+190);
         nav("Commandes","help",sx,sy+228);
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal("✕"), b -> onClose())
-            .bounds(x+615,y+14,24,22).build());
+        addRenderableWidget(Button.builder(Component.literal("✕"), b -> onClose()).bounds(x+615,y+14,24,22).build());
+        buildTabControls(x,y);
     }
 
     private void nav(String label,String id,int x,int y) {
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal(label), b -> tab=id)
-            .bounds(x,y,132,27).build());
+        addRenderableWidget(Button.builder(Component.literal(label), b -> {
+            tab=id;
+            clearWidgets();
+            init();
+        }).bounds(x,y,132,27).build());
+    }
+
+    private void buildTabControls(int x,int y) {
+        int a=x+176, b=y+98;
+        switch(tab) {
+            case "overview" -> {
+                primary=field(a+16,b+68,205,"Nom de la guilde");
+                action("Fonder ma guilde",a+232,b+67,210,()->run("guild create "+safe(primary.getValue())));
+                action("Voir ma guilde",a,b+315,140,()->run("guild info"));
+            }
+            case "members" -> {
+                primary=field(a,b+208,205,"Pseudo du joueur");
+                action("Inviter",a+215,b+207,105,()->run("guild invite "+safe(primary.getValue())));
+                action("Accepter invitation",a+326,b+207,134,()->run("guild accept"));
+                secondary=field(a,b+247,205,"Pseudo membre");
+                action("Promouvoir / rétrograder",a+215,b+246,150,()->run("guild promote "+safe(secondary.getValue())));
+                action("Exclure",a+371,b+246,89,()->run("guild kick "+safe(secondary.getValue())));
+                action("Quitter la guilde",a,b+286,140,()->run("guild leave"));
+                action("Dissoudre (chef)",a+148,b+286,150,()->run("guild disband"));
+                action("Actualiser les membres",a+306,b+286,154,()->run("guild info"));
+            }
+            case "bank" -> {
+                action("Déposer l'objet en main",a,b+208,190,()->run("guild deposit"));
+                primary=field(a,b+248,90,"Emplacement");
+                secondary=field(a+100,b+248,90,"Quantité");
+                action("Retirer",a+200,b+247,100,()->run("guild withdraw "+number(primary.getValue(),1)+" "+number(secondary.getValue(),64)));
+                action("Voir les infos",a+310,b+247,150,()->run("guild info"));
+            }
+            case "journal" -> action("Actualiser le journal",a,b+300,170,()->run("guild journal"));
+            case "activities" -> action("Voir les informations",a,b+250,170,()->run("guild info"));
+            case "jade" -> action("Voir les recettes",a,b+250,170,()->run("guild jadeinfo"));
+            case "help" -> {
+                action("Créer une guilde",a,b+295,145,()->{tab="overview";clearWidgets();init();});
+                action("Afficher les membres",a+153,b+295,160,()->run("guild info"));
+            }
+        }
+    }
+
+    private EditBox field(int x,int y,int w,String hint) {
+        EditBox box=new EditBox(font,x,y,w,20,Component.literal(hint));
+        box.setHint(Component.literal(hint));
+        addRenderableWidget(box);
+        return box;
+    }
+    private void action(String label,int x,int y,int w,Runnable action) {
+        addRenderableWidget(Button.builder(Component.literal(label),b->action.run()).bounds(x,y,w,22).build());
+    }
+    private void run(String command) {
+        Minecraft mc=Minecraft.getInstance();
+        if(mc.player!=null && !command.contains("null") && !command.endsWith(" ")) mc.player.connection.sendCommand(command);
+    }
+    private String safe(String value) {
+        String trimmed=value==null?"":value.trim();
+        return trimmed.matches("[A-Za-z0-9_\\-]{1,24}")?trimmed:"";
+    }
+    private String number(String value,int fallback) {
+        try { return Integer.toString(Math.max(1,Math.min(64,Integer.parseInt(value.trim())))); }
+        catch(Exception ignored) { return Integer.toString(fallback); }
     }
 
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partialTick) {
         renderBackground(g,mouseX,mouseY,partialTick);
         int x=(width-650)/2, y=(height-390)/2;
-        g.fill(x,y,x+650,y+390,OUTER);
-        g.renderOutline(x,y,650,390,GOLD_DARK);
-        g.fill(x+1,y+1,x+649,y+3,GOLD);
-        g.fill(x+1,y+4,x+157,y+389,SIDEBAR);
+        g.fill(x,y,x+650,y+390,OUTER); g.renderOutline(x,y,650,390,GOLD_DARK);
+        g.fill(x+1,y+1,x+649,y+3,GOLD); g.fill(x+1,y+4,x+157,y+389,SIDEBAR);
         g.fill(x+157,y+4,x+158,y+389,LINE);
-
         g.drawString(font,"CITIZEN",x+18,y+18,GOLD,false);
         g.drawString(font,"G U I L D S",x+18,y+33,WHITE,false);
         g.drawString(font,"CHRONIQUES & COMPAGNIES",x+18,y+61,MUTED,false);
         g.fill(x+14,y+83,x+143,y+84,LINE);
-
         g.drawString(font,"ESPACE DE GUILDE",x+176,y+20,MUTED,false);
         g.drawString(font,"Le sanctuaire des compagnons",x+176,y+39,WHITE,false);
-        g.drawString(font,"NEUTRE  •  AUCUNE GUILDE SELECTIONNEE",x+176,y+59,GOLD,false);
+        g.drawString(font,"ACTIONS CONNECTEES AU SERVEUR",x+176,y+59,GOLD,false);
         g.fill(x+174,y+78,x+636,y+79,LINE);
-
         super.render(g,mouseX,mouseY,partialTick);
         switch(tab) {
             case "members" -> renderMembers(g,x,y);
@@ -62,14 +122,11 @@ public final class GuildManagementScreen extends Screen {
             case "help" -> renderHelp(g,x,y);
             default -> renderOverview(g,x,y);
         }
-        g.drawString(font,"CITIZEN GUILDS  •  APERCU DE DEVELOPPEMENT",x+176,y+370,MUTED,false);
+        g.drawString(font,"CITIZEN GUILDS  •  INTERFACE CONNECTEE",x+176,y+370,MUTED,false);
     }
-
     private void card(GuiGraphics g,int x,int y,int w,int h,String heading,String value,String detail) {
-        g.fill(x,y,x+w,y+h,PANEL); g.renderOutline(x,y,w,h,LINE);
-        g.fill(x+1,y+1,x+w-1,y+3,GOLD_DARK);
-        g.drawString(font,heading,x+12,y+12,MUTED,false);
-        g.drawString(font,value,x+12,y+34,GOLD,false);
+        g.fill(x,y,x+w,y+h,PANEL); g.renderOutline(x,y,w,h,LINE); g.fill(x+1,y+1,x+w-1,y+3,GOLD_DARK);
+        g.drawString(font,heading,x+12,y+12,MUTED,false); g.drawString(font,value,x+12,y+34,GOLD,false);
         g.drawString(font,detail,x+12,y+h-18,MUTED,false);
     }
     private void section(GuiGraphics g,int x,int y,String title,String subtitle) {
@@ -79,59 +136,47 @@ public final class GuildManagementScreen extends Screen {
         int a=x+176,b=y+98;
         g.fill(a,b,a+460,b+94,PANEL_ALT); g.renderOutline(a,b,460,94,GOLD_DARK);
         g.drawString(font,"VOTRE HISTOIRE COMMENCE ICI",a+16,b+14,GOLD,false);
-        g.drawString(font,"Fondez une guilde, rassemblez vos allies",a+16,b+37,WHITE,false);
-        g.drawString(font,"et construisez votre legende sur CITIZEN.",a+16,b+54,MUTED,false);
-        card(g,a,b+108,142,82,"MEMBRES","—","Effectif de la guilde");
+        g.drawString(font,"Fondez une guilde et rassemblez vos allies.",a+16,b+37,WHITE,false);
+        g.drawString(font,"Saisissez un nom puis utilisez le bouton pour la creer.",a+16,b+54,MUTED,false);
+        card(g,a,b+108,142,82,"MEMBRES","/guild info","Effectif et grades");
         card(g,a+153,b+108,142,82,"ARMURE DE JADE","RARE","Butin des donjons");
-        card(g,a+306,b+108,154,82,"BANQUE","—","Objets partages");
-        section(g,a,b+213,"ACTIVITE RECENTE","Les evenements de votre guilde apparaitront ici.");
-        g.fill(a,b+249,a+460,b+291,PANEL); g.renderOutline(a,b+249,460,42,LINE);
-        g.drawString(font,"Aucune activite pour le moment.",a+12,b+265,MUTED,false);
+        card(g,a+306,b+108,154,82,"BANQUE","PARTAGEE","Depot et retrait");
+        section(g,a,b+213,"ACTIONS RAPIDES","Les commandes sont executees par le serveur.");
     }
     private void renderMembers(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"MEMBRES DE LA GUILDE","Invitez des aventuriers et gerez leurs grades.");
-        card(g,a,b+45,220,90,"EFFECTIF","—","Membres inscrits");
-        card(g,a+235,b+45,225,90,"INVITATIONS","—","En attente de reponse");
-        g.drawString(font,"La liste des membres sera affichee dans cette zone.",a,b+158,MUTED,false);
+        int a=x+176,b=y+103; section(g,a,b,"MEMBRES DE LA GUILDE","Invitez, acceptez, gerez les grades ou quittez la guilde.");
+        card(g,a,b+45,220,90,"INVITATIONS","EN LIGNE","Invitez un joueur connecté");
+        card(g,a+235,b+45,225,90,"ROLES","CHEF / OFFICIER / MEMBRE","Le chef gere les grades");
+        g.drawString(font,"Les actions affichent leur résultat dans le chat du jeu.",a,b+158,MUTED,false);
     }
     private void renderBank(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"BANQUE DE GUILDE","Un inventaire commun protege par les permissions.");
-        card(g,a,b+45,220,90,"EMPLACEMENTS","—","Capacite du coffre");
-        card(g,a+235,b+45,225,90,"OBJETS STOCKES","—","Ressources partagees");
-        g.drawString(font,"Les depots et retraits seront traces dans le journal.",a,b+158,MUTED,false);
+        int a=x+176,b=y+103; section(g,a,b,"BANQUE DE GUILDE","Deposez l'objet tenu en main ou retirez par emplacement.");
+        card(g,a,b+45,220,90,"DEPOT","MAIN","Tous les membres peuvent deposer");
+        card(g,a+235,b+45,225,90,"RETRAIT","CHEF / OFFICIER","Retraits soumis aux permissions");
+        g.drawString(font,"Les mouvements sont inscrits dans le journal de guilde.",a,b+158,MUTED,false);
     }
     private void renderJade(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"EQUIPEMENT DE JADE","Un minerai rare, reserve aux explorateurs de donjons.");
-        card(g,a,b+45,220,90,"OBTENTION","DONJONS","Butin de coffres speciaux");
+        int a=x+176,b=y+103; section(g,a,b,"EQUIPEMENT DE JADE","Minerai rare obtenu dans les coffres de donjons.");
+        card(g,a,b+45,220,90,"OBTENTION","DONJONS","Aucune generation dans le monde");
         card(g,a+235,b+45,225,90,"UTILISATION","ARMURE","Casque, plastron, jambières, bottes");
-        g.drawString(font,"Le minerai brut doit etre fondu en lingots pour fabriquer l'armure.",a,b+158,MUTED,false);
+        g.drawString(font,"Le minerai brut doit etre fondu en lingots.",a,b+158,MUTED,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"ACTIVITES","Donjons, boss et contributions des compagnons.");
-        card(g,a,b+45,220,90,"DONJONS","—","Participations");
-        card(g,a+235,b+45,225,90,"BOSS VAINCUS","—","Succes de la guilde");
+        card(g,a,b+45,220,90,"SUIVI","EN DEVELOPPEMENT","Statistiques de guilde");
+        card(g,a+235,b+45,225,90,"BOSS VAINCUS","EN DEVELOPPEMENT","Succes de la guilde");
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Toutes les fonctions du systeme sont disponibles en jeu.");
-        String[] lines={
-            "/guild create <nom>  - Fonder une guilde",
-            "/guild invite <joueur>  - Inviter un joueur",
-            "/guild accept  - Accepter une invitation",
-            "/guild info  - Voir les membres et le tresor",
-            "/guild deposit  - Deposer l objet tenu en main",
-            "/guild withdraw <emplacement> [quantite]  - Retirer du coffre",
-            "/guild promote <joueur>  - Basculer membre/officier (chef)",
-            "/guild kick <joueur>  - Exclure un membre (chef)",
-            "/guild leave  - Quitter sa guilde",
-            "/guild disband  - Dissoudre sa guilde (chef)",
-            "/guild jadeitem <namespace:objet>  - Configurer la Pierre de Jade (admin)"
-        };
+        int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
+        String[] lines={"/guild create <nom> - Fonder une guilde","/guild invite <joueur> - Inviter un joueur",
+            "/guild accept - Accepter une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main",
+            "/guild withdraw <slot> [quantite] - Retirer du coffre","/guild promote <joueur> - Changer le grade",
+            "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre"};
         int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
     }
-
     private void renderJournal(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"JOURNAL DE GUILDE","Une trace des invitations, depots, retraits et promotions.");
-        g.fill(a,b+45,a+460,b+235,PANEL); g.renderOutline(a,b+45,460,190,LINE);
-        g.drawString(font,"Aucun evenement enregistre.",a+14,b+61,MUTED,false);
+        int a=x+176,b=y+103; section(g,a,b,"JOURNAL DE GUILDE","Historique des invitations, depots, retraits et promotions.");
+        g.fill(a,b+45,a+460,b+190,PANEL); g.renderOutline(a,b+45,460,145,LINE);
+        g.drawString(font,"Utilisez Actualiser le journal pour afficher l'historique dans le chat.",a+12,b+61,MUTED,false);
     }
 }
