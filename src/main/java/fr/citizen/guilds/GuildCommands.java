@@ -198,10 +198,11 @@ public final class GuildCommands {
                         var level = c.getSource().getServer().overworld();
                         if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                             return fail(c.getSource(), "La porte temporaire n'est pas placee ou son chunk n'est pas charge.");
+                        DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
+                        if (session.active()) return fail(c.getSource(), "Une session est deja active. Termine-la avant d'en lancer une autre.");
                         ServerLevel dungeon = DungeonArena.prepare(c.getSource().getServer());
                         if (dungeon == null) return fail(c.getSource(), "Le monde d'instance CITIZEN n'est pas disponible. Verifie le datapack puis redemarre le serveur.");
-                        DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
-                        if (!session.start(guild.id, guild.name, site)) return fail(c.getSource(), "Une session est deja active.");
+                        if (!session.start(guild.id, guild.name, site)) return fail(c.getSource(), "Impossible de demarrer cette session.");
                         GuildSavedData.get(c.getSource().getServer()).recordDungeonStart(guild.id);
                         c.getSource().getServer().getPlayerList().broadcastSystemMessage(
                             net.minecraft.network.chat.Component.literal("§6[Donjon] §fLa session de " + guild.name + " est ouverte. Les membres peuvent interagir avec la porte en X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + "."), false);
