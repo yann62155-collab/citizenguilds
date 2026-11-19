@@ -33,7 +33,7 @@ public final class GuildManagementScreen extends Screen {
         nav("Activites","activities",sx,sy+136);
         nav("Journal","journal",sx,sy+170);
         nav("Commandes","help",sx,sy+204);
-        if(snapshot.has("isAdmin") && snapshot.get("isAdmin").getAsBoolean()) nav("Administration","admin",sx,sy+238);
+        nav("Administration","admin",sx,sy+238);
         addRenderableWidget(Button.builder(Component.literal("✕"), b -> onClose()).bounds(x+615,y+14,24,22).build());
         buildTabControls(x,y);
     }
@@ -134,6 +134,7 @@ public final class GuildManagementScreen extends Screen {
             case "activities" -> renderActivities(g,x,y);
             case "journal" -> renderJournal(g,x,y);
             case "help" -> renderHelp(g,x,y);
+            case "admin" -> renderAdmin(g,x,y);
             default -> renderOverview(g,x,y);
         }
         g.drawString(font,"CITIZEN GUILDS  •  INTERFACE CONNECTEE",x+176,y+370,MUTED,false);
@@ -191,7 +192,8 @@ public final class GuildManagementScreen extends Screen {
         String item=snapshot.has("autoDepositItem")?snapshot.get("autoDepositItem").getAsString():"citizenguilds:raw_jade";
         card(g,a,b+45,220,90,"RESSOURCE CONFIGUREE",item,"Choisie par un administrateur");
         card(g,a+235,b+45,225,90,"FABRICATION","LINGOT","Four / haut-fourneau puis armure");
-        g.drawString(font,"Le ramassage de cette ressource alimente automatiquement la réserve de ressources.",a,b+158,MUTED,false);
+        g.drawString(font,"La Pierre de Jade est un minerai de craft, jamais une monnaie.",a,b+158,GOLD,false);
+        g.drawString(font,"Minerai brut -> four / haut-fourneau -> lingot -> armure complete.",a,b+176,MUTED,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
@@ -203,17 +205,41 @@ public final class GuildManagementScreen extends Screen {
         card(g,a,b+45,142,90,"MEMBRES",Integer.toString(members),"Effectif actuel");
         card(g,a+153,b+45,142,90,"DEPOTS",Long.toString(deposited),"Objets deposes");
         card(g,a+306,b+45,154,90,"RESERVE",Integer.toString(bank)+"/54","Emplacements occupes");
-        g.drawString(font,"Journal : "+journal+" entree(s) conservee(s).",a,b+158,MUTED,false);
+        int wins=snapshot.has("dungeonWins")?snapshot.get("dungeonWins").getAsInt():0;
+        int deaths=snapshot.has("dungeonDeaths")?snapshot.get("dungeonDeaths").getAsInt():0;
+        card(g,a,b+145,220,65,"DONJONS GAGNES",Integer.toString(wins),"Victoires de guilde");
+        card(g,a+235,b+145,225,65,"ELIMINATIONS",Integer.toString(deaths),"Morts en donjon");
+        g.drawString(font,"Journal : "+journal+" entree(s) conservee(s).",a,b+222,MUTED,false);
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
         String[] lines={"/guild create <nom> - Fonder une guilde","/guild invite <joueur> - Inviter un joueur",
             "/guild accept - Accepter une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main dans la réserve",
             "/guild withdraw <slot> [quantite] - Retirer de la réserve","/guild promote <joueur> - Changer le grade",
-            "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre"};
+            "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre",
+            "/guild dungeon status - Etat de la session","/guild dungeon portal create - Placer la porte (OP)",
+            "/guild dungeon start <guilde> - Ouvrir le donjon (OP)"};
         int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
     }
     
+    private void renderAdmin(GuiGraphics g,int x,int y) {
+        int a=x+176,b=y+103;
+        section(g,a,b,"ADMINISTRATION","Les commandes restent protegees par les permissions serveur.");
+        boolean admin=snapshot.has("isAdmin") && snapshot.get("isAdmin").getAsBoolean();
+        g.fill(a,b+43,a+460,b+75,PANEL);
+        g.drawString(font,admin ? "Acces administrateur confirme." : "Acces en lecture limite ; les actions necessitent le niveau OP 2.",a+10,b+55,admin?GOLD:MUTED,false);
+        com.google.gson.JsonArray guilds=snapshot.has("guilds")?snapshot.getAsJsonArray("guilds"):new com.google.gson.JsonArray();
+        int yy=b+88;
+        for(int i=0;i<Math.min(8,guilds.size());i++){
+            com.google.gson.JsonObject guild=guilds.get(i).getAsJsonObject();
+            g.fill(a,yy,a+460,yy+22,PANEL);
+            g.drawString(font,guild.get("name").getAsString(),a+10,yy+7,WHITE,false);
+            g.drawString(font,guild.get("members").getAsString()+" membre(s)",a+330,yy+7,GOLD,false);
+            yy+=25;
+        }
+        if(guilds.isEmpty())g.drawString(font,"Aucune guilde enregistree.",a,b+100,MUTED,false);
+    }
+
     private void renderJournal(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
         section(g,a,b,"JOURNAL DE GUILDE","Historique des actions de la guilde");
