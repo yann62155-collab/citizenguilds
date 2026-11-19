@@ -177,6 +177,8 @@ public final class DungeonSessionData extends SavedData {
         setDirty();
     }
 
+    public Set<String> participantIds() { return new HashSet<>(participants.keySet()); }
+
     public Set<String> livingParticipantIds() {
         Set<String> living = new HashSet<>(participants.keySet());
         living.removeAll(eliminated);
