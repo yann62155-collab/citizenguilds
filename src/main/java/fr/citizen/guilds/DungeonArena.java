@@ -26,6 +26,12 @@ public final class DungeonArena {
         corridor(level, -3, 3, -57, -45);
         room(level, -13, 13, -82, -58);
 
+        // Open safe passages through the room walls; all carving stays inside this dedicated dimension.
+        doorway(level, -9);
+        doorway(level, -24);
+        doorway(level, -44);
+        doorway(level, -58);
+
         // The entrance chamber and return gate.
         level.setBlockAndUpdate(new BlockPos(0, FLOOR_Y + 1, 7), CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState());
         lantern(level, -7, FLOOR_Y + 4, 0);
@@ -69,6 +75,11 @@ public final class DungeonArena {
                 && pos.getY() >= FLOOR_Y && pos.getY() <= FLOOR_Y + 1) return true;
         }
         return false;
+    }
+
+    private static void doorway(ServerLevel level, int z) {
+        for (int x = -2; x <= 2; x++) for (int y = FLOOR_Y + 1; y <= FLOOR_Y + 3; y++)
+            level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState());
     }
 
     private static void clear(ServerLevel level, int minX, int maxX, int minZ, int maxZ, int minY, int maxY) {
