@@ -17,6 +17,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = CitizenGuilds.MOD_ID)
@@ -25,7 +26,17 @@ public final class DungeonEvents {
     private static int tickCounter;
     private static int trapCounter;
     private static int autoSpawnSeconds;
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(DungeonEvents.class);
     private DungeonEvents() {}
+
+    @SubscribeEvent
+    public static void verifyDungeonDimension(ServerStartedEvent event) {
+        if (event.getServer().getLevel(CitizenDimensions.DUNGEON) == null) {
+            LOGGER.error("CITIZEN_DUNGEON_DIMENSION_MISSING - data pack dimension was not registered");
+        } else {
+            LOGGER.info("CITIZEN_DUNGEON_DIMENSION_LOADED - dedicated instance is ready");
+        }
+    }
 
     @SubscribeEvent
     public static void protectDungeonBlocks(BlockEvent.BreakEvent event) {
