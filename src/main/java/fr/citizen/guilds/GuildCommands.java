@@ -85,7 +85,7 @@ public final class GuildCommands {
                 }
                 return 1;
             }))
-            .then(Commands.literal("jadeitem").requires(source -> source.hasPermission(2))
+            .then(Commands.literal("resourceitem").requires(source -> source.hasPermission(2))
                 .then(Commands.argument("item", StringArgumentType.word()).executes(c -> {
                     String id = StringArgumentType.getString(c, "item");
                     net.minecraft.resources.ResourceLocation key = net.minecraft.resources.ResourceLocation.tryParse(id);
