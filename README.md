@@ -55,7 +55,11 @@ Le scanner recherche autour de l'administrateur une surface naturelle, éloigné
 - Les membres de cette guilde interagissent avec la porte pour entrer dans l'instance.
 - La porte intérieure permet de revenir au site d'entrée.
 - `/guild dungeon status` affiche la vague, les participants et l'état de la session.
+- `/guild dungeon autoscan true|false` active ou désactive l'apparition automatique des portes (activée par défaut).
+- `/guild dungeon interval <minutes>` règle le délai entre apparitions (5 à 1440 minutes, 30 par défaut).
+- `/guild dungeon reward <quantite>` règle la récompense en minerai de Jade par survivant (0 à 64, 3 par défaut).
 - `/guild dungeon end` ferme la session, retire les créatures suivies et ramène les participants connectés dans l'Overworld.
+- `/guild top dungeons` classe les guildes par victoires en donjon ; `/guild top` conserve le classement d'activité de dépôt.
 - `/guild dungeon portal remove` retire la porte extérieure après la fermeture.
 
 ### Déroulement
