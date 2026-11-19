@@ -177,15 +177,23 @@ public final class GuildManagementScreen extends Screen {
         if(items.isEmpty())g.drawString(font,"La banque est vide.",a,b+52,MUTED,false);
     }
     private void renderJade(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"EQUIPEMENT DE JADE","Minerai rare obtenu dans les coffres de donjons.");
-        card(g,a,b+45,220,90,"OBTENTION","DONJONS","Aucune generation dans le monde");
-        card(g,a+235,b+45,225,90,"UTILISATION","ARMURE","Casque, plastron, jambières, bottes");
-        g.drawString(font,"Le minerai brut doit etre fondu en lingots.",a,b+158,MUTED,false);
+        int a=x+176,b=y+103;
+        section(g,a,b,"EQUIPEMENT DE JADE","Objet configuré pour les dépôts automatiques");
+        String item=snapshot.has("jadeItem")?snapshot.get("jadeItem").getAsString():"citizenguilds:raw_jade";
+        card(g,a,b+45,220,90,"OBJET DE JADE",item,"Configuré par un administrateur");
+        card(g,a+235,b+45,225,90,"FABRICATION","LINGOT","Four / haut-fourneau puis armure");
+        g.drawString(font,"Le ramassage de cet objet alimente automatiquement la banque de guilde.",a,b+158,MUTED,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"ACTIVITES","Donjons, boss et contributions des compagnons.");
-        card(g,a,b+45,220,90,"SUIVI","EN DEVELOPPEMENT","Statistiques de guilde");
-        card(g,a+235,b+45,225,90,"BOSS VAINCUS","EN DEVELOPPEMENT","Succes de la guilde");
+        int a=x+176,b=y+103;
+        section(g,a,b,"ACTIVITES","Indicateurs actuels de la guilde");
+        int members=snapshot.has("memberCount")?snapshot.get("memberCount").getAsInt():0;
+        int bank=snapshot.has("bank")?snapshot.getAsJsonArray("bank").size():0;
+        int journal=snapshot.has("journal")?snapshot.getAsJsonArray("journal").size():0;
+        card(g,a,b+45,142,90,"MEMBRES",Integer.toString(members),"Effectif actuel");
+        card(g,a+153,b+45,142,90,"BANQUE",Integer.toString(bank)+"/54","Emplacements occupes");
+        card(g,a+306,b+45,154,90,"JOURNAL",Integer.toString(journal),"Evenements conserves");
+        g.drawString(font,"Les statistiques se mettent a jour avec la synchronisation serveur.",a,b+158,MUTED,false);
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
