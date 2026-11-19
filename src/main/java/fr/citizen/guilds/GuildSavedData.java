@@ -16,6 +16,9 @@ public final class GuildSavedData extends SavedData {
     private final Map<String, Guild> guilds = new LinkedHashMap<>();
     private final Map<String, String> membership = new HashMap<>();
     private final Map<String, String> invitations = new HashMap<>();
+    private String jadeItemId = "citizenguilds:raw_jade";
+    public String getJadeItemId() { return jadeItemId; }
+    public void setJadeItemId(String id) { jadeItemId = id; setDirty(); }
 
     public static GuildSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -24,6 +27,7 @@ public final class GuildSavedData extends SavedData {
 
     public static GuildSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         GuildSavedData data = new GuildSavedData();
+        if (tag.contains("jadeItemId")) data.jadeItemId = tag.getString("jadeItemId");
         ListTag list = tag.getList("guilds", CompoundTag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
@@ -43,6 +47,7 @@ public final class GuildSavedData extends SavedData {
         ListTag list = new ListTag();
         for (Guild guild : guilds.values()) list.add(guild.save(registries));
         tag.put("guilds", list);
+        tag.putString("jadeItemId", jadeItemId);
         ListTag invites = new ListTag();
         invitations.forEach((player, guild) -> {
             CompoundTag invite = new CompoundTag();
