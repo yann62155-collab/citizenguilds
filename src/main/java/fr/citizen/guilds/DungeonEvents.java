@@ -21,6 +21,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class DungeonEvents {
     private static final String MOB_TAG = "citizenguilds_dungeon_mob";
     private static int tickCounter;
+    private static int trapCounter;
     private DungeonEvents() {}
 
     @SubscribeEvent
@@ -51,12 +52,12 @@ public final class DungeonEvents {
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
             return;
         }
-        ServerLevel level = server.overworld();
-        if (!level.hasChunkAt(session.site())) return;
+        ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
+        if (level == null) return;
 
         if (session.wavePending()) {
             if (session.wave() == 0) session.nextWave();
-            List<String> spawned = spawnWave(level, session.site(), session.wave());
+            List<String> spawned = spawnWave(level, DungeonArena.waveCenter(session.wave()), session.wave());
             session.setWaveMobs(spawned);
             server.getPlayerList().broadcastSystemMessage(
                 Component.literal("§6[Donjon] §fVague " + session.wave() + "/3 : " + spawned.size() + " adversaire(s) apparaissent."), false);
@@ -68,6 +69,7 @@ public final class DungeonEvents {
         }
 
         int remaining = session.pruneMobIds(level);
+        if (session.wave() == 2) applyTrapPulse(server, level, session);
         if (remaining > 0) return;
         if (session.wave() < 3) {
             session.nextWave();
@@ -76,6 +78,18 @@ public final class DungeonEvents {
             return;
         }
         completeVictory(server, session);
+    }
+
+    private static void applyTrapPulse(MinecraftServer server, ServerLevel level, DungeonSessionData session) {
+        if (++trapCounter < 15) return;
+        trapCounter = 0;
+        for (String uuid : session.livingParticipantIds()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
+            if (player == null || player.serverLevel() != level) continue;
+            if (!DungeonArena.isTrap(player.blockPosition())) continue;
+            player.hurt(level.damageSources().magic(), 3.0F);
+            player.sendSystemMessage(Component.literal("§c[Piege] Le sol runique te brule ! Eloigne-toi des dalles rouges."));
+        }
     }
 
     private static List<String> spawnWave(ServerLevel level, BlockPos site, int wave) {
