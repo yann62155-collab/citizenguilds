@@ -170,16 +170,14 @@ public final class DungeonSessionData extends SavedData {
         setDirty();
     }
 
+    public boolean mobDefeated(UUID uuid) {
+        boolean removed = activeMobIds.remove(uuid.toString());
+        if (removed) setDirty();
+        return removed;
+    }
+
     public int pruneMobIds(ServerLevel level) {
-        activeMobIds.removeIf(id -> {
-            try {
-                Entity entity = level.getEntity(UUID.fromString(id));
-                return entity == null || !entity.isAlive();
-            } catch (IllegalArgumentException ignored) {
-                return true;
-            }
-        });
-        setDirty();
+        // Entity death events remove defeated IDs. Keep unloaded, living mobs in the session.
         return activeMobIds.size();
     }
 
