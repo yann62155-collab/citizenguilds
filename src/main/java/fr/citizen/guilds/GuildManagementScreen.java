@@ -123,6 +123,8 @@ public final class GuildManagementScreen extends Screen {
 
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partialTick) {
         renderBackground(g,mouseX,mouseY,partialTick);
+        // Opaque full-screen veil hides the vanilla HUD and any world overlay behind this custom menu.
+        g.fill(0,0,width,height,0xFF080A0F);
         int x=(width-650)/2, y=(height-390)/2;
         g.fill(x,y,x+650,y+390,OUTER); g.renderOutline(x,y,650,390,GOLD_DARK);
         g.fill(x+1,y+1,x+649,y+3,GOLD); g.fill(x+1,y+4,x+157,y+389,SIDEBAR);
