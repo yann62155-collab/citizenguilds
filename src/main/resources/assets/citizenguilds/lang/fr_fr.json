@@ -1,5 +1,7 @@
 {
   "screen.citizenguilds.title": "Citizen Guilds",
+  "key.categories.citizenguilds": "Citizen",
+  "key.citizenguilds.open": "Ouvrir le menu des guildes",
   "item.citizenguilds.raw_jade": "Minerai de Pierre de Jade",
   "item.citizenguilds.jade_ingot": "Lingot de Jade",
   "item.citizenguilds.jade_helmet": "Casque en Jade",
