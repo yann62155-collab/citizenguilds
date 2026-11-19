@@ -82,7 +82,7 @@ public final class GuildManagementScreen extends Screen {
             case "admin" -> {
                 primary=field(a,b+208,205,"Nom exact de la guilde");
                 action("Lister les guildes",a+215,b+207,145,()->run("guild admin list"));
-                action("Dissoudre la guilde",a,b+247,180,()->run("guild admin disband \\""+safe(primary.getValue())+"\\""));
+                action("Dissoudre la guilde",a,b+247,180,()->run("guild admin disband "+safe(primary.getValue())));
             }
         }
     }
