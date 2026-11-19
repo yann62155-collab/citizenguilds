@@ -3,6 +3,7 @@ package fr.citizen.guilds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,8 +24,11 @@ public final class DungeonArena {
         if (level == null) return null;
 
         AABB arenaBounds = new AABB(-16, FLOOR_Y - 5, -85, 16, FLOOR_Y + 10, 15);
-        level.getEntitiesOfClass(Mob.class, arenaBounds).forEach(Entity -> Entity.discard());
-        level.getEntitiesOfClass(ItemEntity.class, arenaBounds).forEach(Entity -> Entity.discard());
+        for (ServerPlayer player : level.players()) {
+            if (arenaBounds.intersects(player.getBoundingBox())) return null;
+        }
+        level.getEntitiesOfClass(Mob.class, arenaBounds).forEach(entity -> entity.discard());
+        level.getEntitiesOfClass(ItemEntity.class, arenaBounds).forEach(entity -> entity.discard());
 
         clear(level, -16, 16, -84, 14, FLOOR_Y, FLOOR_Y + 7);
         room(level, -9, 9, -9, 9);
