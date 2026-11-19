@@ -179,7 +179,6 @@ public final class GuildSavedData extends SavedData {
         if (remaining > freeSlots * perSlot) return false;
 
         int deposited = stack.getCount();
-        guild.totalDepositedItems += deposited;
         for (ItemStack stored : guild.bank) {
             if (!ItemStack.isSameItemSameComponents(stored, stack)) continue;
             int moved = Math.min(remaining, stored.getMaxStackSize() - stored.getCount());
@@ -191,6 +190,7 @@ public final class GuildSavedData extends SavedData {
             guild.bank.add(stack.copyWithCount(moved));
             remaining -= moved;
         }
+        guild.totalDepositedItems += deposited;
         guild.log(player.getGameProfile().getName() + " a depose " + deposited + "x " + stack.getHoverName().getString());
         stack.setCount(0); setDirty(); return true;
     }
