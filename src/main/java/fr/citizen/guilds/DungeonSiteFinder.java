@@ -19,6 +19,7 @@ public final class DungeonSiteFinder {
         for (int attempt = 0; attempt < 600; attempt++) {
             int x = centerX + level.getRandom().nextInt(257) - 128;
             int z = centerZ + level.getRandom().nextInt(257) - 128;
+            if (!level.hasChunkAt(new BlockPos(x, level.getMinBuildHeight(), z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos feet = new BlockPos(x, y, z);
             if (isSafeSite(level, feet, minX, minY, minZ)) return feet;
