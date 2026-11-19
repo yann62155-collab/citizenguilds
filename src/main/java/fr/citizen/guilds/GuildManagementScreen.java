@@ -64,7 +64,7 @@ public final class GuildManagementScreen extends Screen {
                 primary=field(a,b+248,90,"Emplacement");
                 secondary=field(a+100,b+248,90,"Quantité");
                 action("Retirer",a+200,b+247,100,()->run("guild withdraw "+number(primary.getValue(),1)+" "+number(secondary.getValue(),64)));
-                action("Voir les infos",a+310,b+247,150,()->run("guild info"));
+                action("Voir la banque",a+310,b+247,150,()->run("guild bank"));
             }
             case "journal" -> action("Actualiser le journal",a,b+300,170,()->run("guild journal"));
             case "activities" -> action("Voir les informations",a,b+250,170,()->run("guild info"));
