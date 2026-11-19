@@ -13,8 +13,11 @@ public final class GuildEvents {
     @SubscribeEvent
     public static void onItemPickup(ItemEntityPickupEvent.Post event) {
         if (!(event.getPlayer() instanceof ServerPlayer player)) return;
+        GuildSavedData data = GuildSavedData.get(player.getServer());
+        String pickedId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(event.getOriginalStack().getItem()).toString();
+        if (!pickedId.equals(data.getJadeItemId())) return;
         int pickedUp = event.getOriginalStack().getCount() - event.getCurrentStack().getCount();
         if (pickedUp <= 0) return;
-        GuildSavedData.get(player.getServer()).autoDepositJade(player, pickedUp);
+        data.autoDepositJade(player, pickedUp);
     }
 }
