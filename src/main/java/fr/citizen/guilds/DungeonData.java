@@ -12,6 +12,7 @@ public final class DungeonData extends SavedData {
     private int minX = 2381;
     private int minY = 68;
     private int minZ = 75;
+    private int rewardJade = 3;
     private BlockPos lastSite = null;
 
     public static DungeonData get(MinecraftServer server) {
@@ -24,6 +25,7 @@ public final class DungeonData extends SavedData {
         data.minX = tag.contains("minX") ? tag.getInt("minX") : 2381;
         data.minY = tag.contains("minY") ? tag.getInt("minY") : 68;
         data.minZ = tag.contains("minZ") ? tag.getInt("minZ") : 75;
+        data.rewardJade = tag.contains("rewardJade") ? Math.max(0, Math.min(64, tag.getInt("rewardJade"))) : 3;
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
     }
@@ -32,6 +34,7 @@ public final class DungeonData extends SavedData {
         tag.putInt("minX", minX);
         tag.putInt("minY", minY);
         tag.putInt("minZ", minZ);
+        tag.putInt("rewardJade", rewardJade);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
             tag.putInt("siteX", lastSite.getX());
@@ -44,7 +47,13 @@ public final class DungeonData extends SavedData {
     public int minX() { return minX; }
     public int minY() { return minY; }
     public int minZ() { return minZ; }
+    public int rewardJade() { return rewardJade; }
     public BlockPos lastSite() { return lastSite; }
+
+    public void setRewardJade(int amount) {
+        rewardJade = Math.max(0, Math.min(64, amount));
+        setDirty();
+    }
 
     public void setMinimum(int x, int y, int z) {
         minX = x; minY = y; minZ = z; setDirty();
