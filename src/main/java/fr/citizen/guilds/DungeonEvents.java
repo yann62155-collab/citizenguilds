@@ -123,6 +123,13 @@ public final class DungeonEvents {
         BlockPos previous = data.lastSite();
         if (previous != null && overworld.hasChunkAt(previous)
             && overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
+            long spawnedAt = data.portalSpawnGameTime();
+            if (spawnedAt > 0L && overworld.getGameTime() - spawnedAt >= 20L * 60L * 60L * 2L) {
+                overworld.removeBlock(previous, false);
+                data.clearLastSite();
+                server.getPlayerList().broadcastSystemMessage(
+                    Component.literal("§7[Donjon] Une porte ancienne s'est refermee apres deux heures d'attente."), false);
+            }
             autoSpawnSeconds = 0;
             return;
         }
@@ -139,6 +146,7 @@ public final class DungeonEvents {
         }
         if (!overworld.getBlockState(site).isAir() || !overworld.getBlockState(site.above()).isAir()) return;
         data.setLastSite(site);
+        data.setPortalSpawnGameTime(overworld.getGameTime());
         overworld.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
         autoSpawnSeconds = 0;
         server.getPlayerList().broadcastSystemMessage(
