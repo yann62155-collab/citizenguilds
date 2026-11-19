@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["J J", "JJJ", "JJJ"],
+  "key": { "J": { "item": "citizenguilds:jade_ingot" } },
+  "result": { "id": "citizenguilds:jade_chestplate", "count": 1 }
+}
