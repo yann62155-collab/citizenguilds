@@ -3,6 +3,8 @@ package fr.citizen.guilds;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -154,6 +156,8 @@ public final class GuildCommands {
                         var level = c.getSource().getServer().overworld();
                         if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                             return fail(c.getSource(), "La porte temporaire n'est pas placee ou son chunk n'est pas charge.");
+                        ServerLevel dungeon = DungeonArena.prepare(c.getSource().getServer());
+                        if (dungeon == null) return fail(c.getSource(), "Le monde d'instance CITIZEN n'est pas disponible. Verifie le datapack puis redemarre le serveur.");
                         DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
                         if (!session.start(guild.id, guild.name, site)) return fail(c.getSource(), "Une session est deja active.");
                         c.getSource().getServer().getPlayerList().broadcastSystemMessage(
@@ -165,10 +169,19 @@ public final class GuildCommands {
                     if (!session.active()) return fail(c.getSource(), "Aucune session active.");
                     String guildName = session.guildName();
                     var site = session.site();
-                    c.getSource().getServer().overworld();
-                    if (site != null) session.removeActiveMobs(c.getSource().getServer().overworld());
+                    var dungeonLevel = c.getSource().getServer().getLevel(CitizenDimensions.DUNGEON);
+                    if (dungeonLevel != null) session.removeActiveMobs(dungeonLevel);
+                    var overworld = c.getSource().getServer().overworld();
+                    for (String uuid : session.participantIds()) {
+                        ServerPlayer participant = c.getSource().getServer().getPlayerList().getPlayer(java.util.UUID.fromString(uuid));
+                        if (participant != null && participant.serverLevel() != overworld) {
+                            BlockPos returnPos = site == null ? overworld.getSharedSpawnPos() : site.offset(2, 0, 2);
+                            participant.teleportTo(overworld, returnPos.getX() + 0.5D, returnPos.getY(), returnPos.getZ() + 0.5D,
+                                participant.getYRot(), participant.getXRot());
+                        }
+                    }
                     session.end();
-                    var level = c.getSource().getServer().overworld();
+                    var level = overworld;
                     if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                         level.removeBlock(site, false);
                     return ok(c.getSource(), "Session de " + guildName + " fermee. La porte a ete retiree si son emplacement etait intact.");
