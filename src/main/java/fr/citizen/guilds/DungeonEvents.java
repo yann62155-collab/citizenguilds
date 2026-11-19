@@ -102,7 +102,14 @@ public final class DungeonEvents {
         boolean atLeastOneOnline = false;
         for (String uuid : session.livingParticipantIds()) {
             ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
-            if (player != null && player.serverLevel() == level) { atLeastOneOnline = true; break; }
+            if (player == null || player.serverLevel() != level) continue;
+            atLeastOneOnline = true;
+            if (!DungeonArena.isInsideBounds(player.blockPosition())) {
+                BlockPos entrance = DungeonArena.entrance();
+                player.teleportTo(level, entrance.getX() + 0.5D, entrance.getY(), entrance.getZ() + 0.5D,
+                    player.getYRot(), player.getXRot());
+                player.sendSystemMessage(Component.literal("§e[Donjon] Tu as ete replace dans les limites de l'instance."));
+            }
         }
         if (!atLeastOneOnline) return;
 
