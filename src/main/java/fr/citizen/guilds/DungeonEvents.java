@@ -23,6 +23,7 @@ public final class DungeonEvents {
     private static final String MOB_TAG = "citizenguilds_dungeon_mob";
     private static int tickCounter;
     private static int trapCounter;
+    private static int autoSpawnSeconds;
     private DungeonEvents() {}
 
     @SubscribeEvent
@@ -65,7 +66,11 @@ public final class DungeonEvents {
         tickCounter = 0;
         MinecraftServer server = event.getServer();
         DungeonSessionData session = DungeonSessionData.get(server);
-        if (!session.active() || session.finished() || session.site() == null || session.participantCount() == 0) return;
+        if (!session.active()) {
+            tryAutoSpawnPortal(server);
+            return;
+        }
+        if (session.finished() || session.site() == null || session.participantCount() == 0) return;
         if (session.aliveCount() == 0) {
             session.finish(false);
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
@@ -103,6 +108,36 @@ public final class DungeonEvents {
             return;
         }
         completeVictory(server, session);
+    }
+
+    private static void tryAutoSpawnPortal(MinecraftServer server) {
+        DungeonData data = DungeonData.get(server);
+        if (!data.autoSpawnEnabled()) { autoSpawnSeconds = 0; return; }
+        ServerLevel overworld = server.overworld();
+        BlockPos previous = data.lastSite();
+        if (previous != null && overworld.hasChunkAt(previous)
+            && overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
+            autoSpawnSeconds = 0;
+            return;
+        }
+        int interval = data.spawnIntervalMinutes() * 60;
+        if (++autoSpawnSeconds < interval) return;
+
+        ServerPlayer administrator = overworld.players().stream()
+            .filter(player -> player.hasPermissions(2)).findFirst().orElse(null);
+        if (administrator == null) return;
+        BlockPos site = DungeonSiteFinder.find(overworld, administrator, data.minX(), data.minY(), data.minZ());
+        if (site == null) {
+            autoSpawnSeconds = Math.max(0, interval - 300);
+            return;
+        }
+        if (!overworld.getBlockState(site).isAir() || !overworld.getBlockState(site.above()).isAir()) return;
+        data.setLastSite(site);
+        overworld.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
+        autoSpawnSeconds = 0;
+        server.getPlayerList().broadcastSystemMessage(
+            Component.literal("§6[Donjon] §fUne porte ancienne vient d'apparaitre : X " + site.getX()
+                + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld). Le portail attend une guilde."), false);
     }
 
     private static void applyTrapPulse(MinecraftServer server, ServerLevel level, DungeonSessionData session) {
