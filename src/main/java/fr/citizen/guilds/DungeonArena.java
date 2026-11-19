@@ -68,6 +68,11 @@ public final class DungeonArena {
         };
     }
 
+    public static boolean isInsideBounds(BlockPos pos) {
+        return pos.getX() >= -13 && pos.getX() <= 13 && pos.getZ() >= -82 && pos.getZ() <= 9
+            && pos.getY() >= FLOOR_Y - 2 && pos.getY() <= FLOOR_Y + 8;
+    }
+
     public static boolean isTrap(BlockPos pos) {
         int[][] traps = {{-5,-30},{5,-30},{-5,-36},{5,-36},{0,-40}};
         for (int[] trap : traps) {
