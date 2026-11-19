@@ -207,6 +207,20 @@ public final class GuildSavedData extends SavedData {
         guild.log(player.getGameProfile().getName() + " a retire " + amount + "x " + result.getHoverName().getString());
         setDirty(); return result;
     }
+    public void recordDungeonStart(String guildId) {
+        Guild guild = guilds.get(guildId);
+        if (guild == null) return;
+        guild.log("Une expedition de donjon a commence");
+        setDirty();
+    }
+
+    public void recordDungeonFailure(String guildId) {
+        Guild guild = guilds.get(guildId);
+        if (guild == null) return;
+        guild.log("L'expedition de donjon s'est terminee par un echec");
+        setDirty();
+    }
+
     public void recordDungeonDeath(String guildId, String playerName) {
         Guild guild = guilds.get(guildId);
         if (guild == null) return;
