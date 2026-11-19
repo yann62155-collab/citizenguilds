@@ -1,9 +1,10 @@
 {
   "screen.citizenguilds.title": "Citizen Guilds",
-  "item.citizenguilds.raw_jade": "Minerai de Jade",
+  "item.citizenguilds.raw_jade": "Minerai de Pierre de Jade",
   "item.citizenguilds.jade_ingot": "Lingot de Jade",
   "item.citizenguilds.jade_helmet": "Casque en Jade",
   "item.citizenguilds.jade_chestplate": "Plastron en Jade",
   "item.citizenguilds.jade_leggings": "Jambières en Jade",
-  "item.citizenguilds.jade_boots": "Bottes en Jade"
+  "item.citizenguilds.jade_boots": "Bottes en Jade",
+  "block.citizenguilds.dungeon_gate": "Porte de donjon"
 }
