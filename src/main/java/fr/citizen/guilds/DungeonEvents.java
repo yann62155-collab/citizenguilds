@@ -46,6 +46,9 @@ public final class DungeonEvents {
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
+        if (event.getEntity().getTags().contains(MOB_TAG) && event.getEntity().level() instanceof ServerLevel mobLevel) {
+            DungeonSessionData.get(mobLevel.getServer()).mobDefeated(event.getEntity().getUUID());
+        }
         if (!(event.getEntity() instanceof ServerPlayer player) || player.getServer() == null) return;
         DungeonSessionData session = DungeonSessionData.get(player.getServer());
         if (!session.eliminate(player)) return;
