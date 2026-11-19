@@ -206,6 +206,12 @@ public final class DungeonSessionData extends SavedData {
     }
 
     public void removeActiveMobs(ServerLevel level) {
+        // The arena occupies this fixed chunk rectangle; load it so unloaded mobs can be removed too.
+        for (int chunkX = -1; chunkX <= 1; chunkX++) {
+            for (int chunkZ = -6; chunkZ <= 0; chunkZ++) {
+                level.getChunkAt(new BlockPos(chunkX * 16 + 8, DungeonArena.FLOOR_Y, chunkZ * 16 + 8));
+            }
+        }
         for (String id : activeMobIds) {
             try {
                 Entity entity = level.getEntity(UUID.fromString(id));
