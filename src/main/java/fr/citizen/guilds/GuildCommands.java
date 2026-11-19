@@ -168,9 +168,8 @@ public final class GuildCommands {
                         var site = data.lastSite();
                         if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord /guild dungeon scan.");
                         var level = c.getSource().getServer().overworld();
-                        if (!level.hasChunkAt(site)) return fail(c.getSource(), "Le chunk du site n'est pas charge. Rends-toi sur place puis relance.");
-                        if (!level.getBlockState(site).isAir()) return fail(c.getSource(), "L'emplacement de la porte n'est plus libre.");
-                        if (!level.getBlockState(site.above()).isAir()) return fail(c.getSource(), "L'espace au-dessus de la porte est obstrue.");
+                        if (!DungeonSiteFinder.isSafeSite(level, site, data.minX(), data.minY(), data.minZ()))
+                            return fail(c.getSource(), "Le site ne respecte plus les criteres de securite. Relance /guild dungeon scan.");
                         level.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
                         data.setPortalSpawnGameTime(level.getGameTime());
                         c.getSource().getServer().getPlayerList().broadcastSystemMessage(
