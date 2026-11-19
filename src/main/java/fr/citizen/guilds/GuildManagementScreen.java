@@ -77,7 +77,7 @@ public final class GuildManagementScreen extends Screen {
             }
             case "journal" -> action("Actualiser le journal",a,b+300,170,()->GuildNetwork.requestSync());
             case "activities" -> action("Voir les informations",a,b+250,170,()->run("guild info"));
-            case "jade" -> action("Voir les recettes",a,b+250,170,()->GuildNetwork.requestSync());
+            case "jade" -> action("Actualiser les ressources",a,b+250,190,()->GuildNetwork.requestSync());
             case "help" -> {
                 action("Créer une guilde",a,b+295,145,()->{tab="overview";clearWidgets();init();});
                 action("Afficher les membres",a+153,b+295,160,()->run("guild info"));
@@ -201,16 +201,26 @@ public final class GuildManagementScreen extends Screen {
     private void renderMembers(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
         section(g,a,b,"MEMBRES DE LA GUILDE",snapshot.has("name") ? snapshot.get("name").getAsString()+" • "+snapshot.get("memberCount").getAsInt()+" membre(s)" : "Aucune guilde active");
+        if (snapshot.has("hasInvitation") && snapshot.get("hasInvitation").getAsBoolean()) {
+            String invitedGuild = snapshot.has("invitationGuild") ? snapshot.get("invitationGuild").getAsString() : "Guilde inconnue";
+            int invitedMembers = snapshot.has("invitationGuildMembers") ? snapshot.get("invitationGuildMembers").getAsInt() : 0;
+            g.fill(a,b+29,a+460,b+66,PANEL_ALT);
+            g.drawString(font,"INVITATION EN ATTENTE",a+10,b+34,GOLD,false);
+            g.drawString(font,"Rejoindre "+invitedGuild+" • "+invitedMembers+" membre(s) — Accepter ou refuser ci-dessous",a+10,b+49,WHITE,false);
+        } else {
+            g.fill(a,b+29,a+460,b+66,PANEL);
+            g.drawString(font,"Aucune invitation en attente.",a+10,b+43,MUTED,false);
+        }
         com.google.gson.JsonArray members=snapshot.has("members")?snapshot.getAsJsonArray("members"):new com.google.gson.JsonArray();
-        int yy=b+43;
-        for(int i=0;i<Math.min(8,members.size());i++){
+        int yy=b+73;
+        for(int i=0;i<Math.min(5,members.size());i++){
             com.google.gson.JsonObject m=members.get(i).getAsJsonObject();
             g.fill(a,yy,a+460,yy+22,PANEL);
             g.drawString(font,m.get("name").getAsString(),a+10,yy+7,WHITE,false);
             g.drawString(font,m.get("role").getAsString(),a+330,yy+7,GOLD,false);
             yy+=25;
         }
-        if(members.isEmpty())g.drawString(font,"Aucun membre à afficher. Actualisez les données.",a,b+52,MUTED,false);
+        if(members.isEmpty() && !(snapshot.has("hasInvitation") && snapshot.get("hasInvitation").getAsBoolean()))g.drawString(font,"Aucun membre à afficher. Créez une guilde ou rejoignez-en une.",a,b+82,MUTED,false);
     }
     private void renderBank(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
@@ -228,12 +238,16 @@ public final class GuildManagementScreen extends Screen {
     }
     private void renderJade(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
-        section(g,a,b,"MINERAIS & FABRICATION","Ressource configurée pour le dépôt automatique");
+        section(g,a,b,"PIERRE DE JADE — OBJETS DISPONIBLES","La ressource et les quatre pièces d'armure sont enregistrées dans le mod.");
         String item=snapshot.has("autoDepositItem")?snapshot.get("autoDepositItem").getAsString():"citizenguilds:raw_jade";
-        card(g,a,b+45,220,90,"RESSOURCE CONFIGUREE",item,"Choisie par un administrateur");
-        card(g,a+235,b+45,225,90,"FABRICATION","LINGOT","Four / haut-fourneau puis armure");
-        g.drawString(font,"La Pierre de Jade est un minerai de craft, jamais une monnaie.",a,b+158,GOLD,false);
-        g.drawString(font,"Minerai brut -> four / haut-fourneau -> lingot -> armure complete.",a,b+176,MUTED,false);
+        card(g,a,b+38,220,78,"MINERAI BRUT","raw_jade","Butin de coffres de donjon");
+        card(g,a+235,b+38,225,78,"LINGOT DE JADE","jade_ingot","Cuisson du minerai brut");
+        g.drawString(font,"RECETTES D'ARMURE",a,b+132,GOLD,false);
+        g.drawString(font,"Casque • Plastron • Jambières • Bottes",a,b+151,WHITE,false);
+        g.drawString(font,"Minerai brut : butin de donjon (12 % par coffre ciblé).",a,b+178,MUTED,false);
+        g.drawString(font,"Cuisson : four ou haut-fourneau. Armures : établi, lingots de Jade.",a,b+196,MUTED,false);
+        g.drawString(font,"Dépôt automatique configuré : "+item,a,b+222,MUTED,false);
+        g.drawString(font,"La Pierre de Jade est un minerai de fabrication, jamais une monnaie.",a,b+244,GOLD,false);
     }
     private void renderActivities(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103;
