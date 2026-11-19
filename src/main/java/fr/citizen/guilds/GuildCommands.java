@@ -1,5 +1,6 @@
 package fr.citizen.guilds;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
@@ -104,6 +105,18 @@ public final class GuildCommands {
                                 DungeonData.get(c.getSource().getServer()).setMinimum(x, y, z);
                                 return ok(c.getSource(), "Limite minimale des donjons definie : X " + x + ", Y " + y + ", Z " + z + ".");
                             })))))
+                .then(Commands.literal("autoscan").requires(source -> source.hasPermission(2))
+                    .then(Commands.argument("active", BoolArgumentType.bool()).executes(c -> {
+                        boolean enabled = BoolArgumentType.getBool(c, "active");
+                        DungeonData.get(c.getSource().getServer()).setAutoSpawnEnabled(enabled);
+                        return ok(c.getSource(), "Apparition automatique des portails : " + (enabled ? "activee" : "desactivee") + ".");
+                    })))
+                .then(Commands.literal("interval").requires(source -> source.hasPermission(2))
+                    .then(Commands.argument("minutes", IntegerArgumentType.integer(5, 1440)).executes(c -> {
+                        int minutes = IntegerArgumentType.getInteger(c, "minutes");
+                        DungeonData.get(c.getSource().getServer()).setSpawnIntervalMinutes(minutes);
+                        return ok(c.getSource(), "Intervalle entre les apparitions : " + minutes + " minute(s).");
+                    })))
                 .then(Commands.literal("reward").requires(source -> source.hasPermission(2))
                     .then(Commands.argument("quantite", IntegerArgumentType.integer(0, 64)).executes(c -> {
                         int amount = IntegerArgumentType.getInteger(c, "quantite");
