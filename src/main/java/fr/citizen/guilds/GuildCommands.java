@@ -32,13 +32,19 @@ public final class GuildCommands {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 return GuildSavedData.get(p.getServer()).rename(p, StringArgumentType.getString(c, "nom")) ? ok(c.getSource(), "Guilde renommee.") : fail(c.getSource(), "Seul le chef peut renommer (3 a 24 caracteres).");
             })))
-            .then(Commands.literal("invite").then(Commands.argument("joueur", net.minecraft.commands.arguments.EntityArgument.player()).executes(c -> {
-                ServerPlayer p=c.getSource().getPlayerOrException(), target=net.minecraft.commands.arguments.EntityArgument.getPlayer(c,"joueur");
-                return GuildSavedData.get(p.getServer()).invite(p,target)?ok(c.getSource(),"Invitation envoyee a "+target.getGameProfile().getName()+"."):fail(c.getSource(),"Invitation impossible (droits, guilde ou joueur deja membre).");
+            .then(Commands.literal("invite").then(Commands.argument("numero_hibou", IntegerArgumentType.integer(1)).executes(c -> {
+                ServerPlayer p=c.getSource().getPlayerOrException();
+                int owlNumber=IntegerArgumentType.getInteger(c,"numero_hibou");
+                return GuildSavedData.get(p.getServer()).inviteByHibou(p,owlNumber)
+                    ?1:fail(c.getSource(),"Invitation impossible : numéro de hibou inconnu, joueur déjà membre/invité ou droits insuffisants.");
             })))
             .then(Commands.literal("accept").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 return GuildSavedData.get(p.getServer()).accept(p)?ok(c.getSource(),"Tu as rejoint la guilde."):fail(c.getSource(),"Aucune invitation valide.");
+            }))
+            .then(Commands.literal("refuse").executes(c -> {
+                ServerPlayer p=c.getSource().getPlayerOrException();
+                return GuildSavedData.get(p.getServer()).refuse(p)?ok(c.getSource(),"Invitation refusée."):fail(c.getSource(),"Aucune invitation à refuser.");
             }))
             .then(Commands.literal("leave").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
