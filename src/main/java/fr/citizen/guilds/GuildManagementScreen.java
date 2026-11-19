@@ -57,10 +57,11 @@ public final class GuildManagementScreen extends Screen {
                 action("Actualiser",a+365,b+257,95,()->GuildNetwork.requestSync());
             }
             case "members" -> {
-                primary=field(a,b+208,205,"Pseudo du joueur");
-                action("Inviter",a+215,b+207,105,()->run("guild invite "+safe(primary.getValue())));
-                action("Accepter invitation",a+326,b+207,134,()->run("guild accept"));
-                secondary=field(a,b+247,205,"Pseudo membre");
+                primary=field(a,b+208,205,"Numéro de hibou du joueur");
+                action("Recruter",a+215,b+207,105,()->run("guild invite "+positiveNumber(primary.getValue())));
+                action("Accepter",a+326,b+207,64,()->run("guild accept"));
+                action("Refuser",a+394,b+207,66,()->run("guild refuse"));
+                secondary=field(a,b+247,205,"Pseudo membre (gestion)");
                 action("Promouvoir / rétrograder",a+215,b+246,150,()->run("guild promote "+safe(secondary.getValue())));
                 action("Exclure",a+371,b+246,89,()->run("guild kick "+safe(secondary.getValue())));
                 action("Quitter la guilde",a,b+286,140,()->run("guild leave"));
@@ -108,6 +109,12 @@ public final class GuildManagementScreen extends Screen {
     private String safe(String value) {
         String trimmed=value==null?"":value.trim();
         return trimmed.matches("[\\p{L}\\p{N}_ -]{3,24}")?trimmed:"";
+    }
+    private String positiveNumber(String value) {
+        try {
+            int parsed=Integer.parseInt(value.trim());
+            return parsed > 0 ? Integer.toString(parsed) : "0";
+        } catch(Exception ignored) { return "0"; }
     }
     private String number(String value,int fallback) {
         try { return Integer.toString(Math.max(1,Math.min(64,Integer.parseInt(value.trim())))); }
@@ -246,8 +253,8 @@ public final class GuildManagementScreen extends Screen {
     }
     private void renderHelp(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"COMMANDES DE GUILDE","Les boutons executent les commandes cote serveur.");
-        String[] lines={"/guild create <nom> - Fonder une guilde","/guild invite <joueur> - Inviter un joueur",
-            "/guild accept - Accepter une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main dans la réserve",
+        String[] lines={"/guild create <nom> - Fonder une guilde","/guild invite <numero_hibou> - Recruter via CitizenHibou",
+            "/guild accept - Accepter une invitation","/guild refuse - Refuser une invitation","/guild info - Voir les membres","/guild deposit - Deposer l'objet en main dans la réserve",
             "/guild withdraw <slot> [quantite] - Retirer de la réserve","/guild promote <joueur> - Changer le grade",
             "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre",
             "/guild dungeon status - Etat de la session","/guild dungeon portal create - Placer la porte (OP)",
