@@ -44,7 +44,7 @@ public final class DungeonArena {
         doorway(level, -58);
 
         // The entrance chamber and return gate.
-        level.setBlockAndUpdate(new BlockPos(0, FLOOR_Y + 1, 7), CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState());
+        put(level, new BlockPos(0, FLOOR_Y + 1, 7), CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState());
         lantern(level, -7, FLOOR_Y + 4, 0);
         lantern(level, 7, FLOOR_Y + 4, 0);
         lantern(level, -9, FLOOR_Y + 4, -34);
@@ -96,6 +96,10 @@ public final class DungeonArena {
     private static void doorway(ServerLevel level, int z) {
         for (int x = -2; x <= 2; x++) for (int y = FLOOR_Y + 1; y <= FLOOR_Y + 3; y++)
             level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState());
+    }
+
+    private static void put(ServerLevel level, BlockPos pos, BlockState state) {
+        level.setBlock(pos, state, 2);
     }
 
     private static void clear(ServerLevel level, int minX, int maxX, int minZ, int maxZ, int minY, int maxY) {
