@@ -19,20 +19,25 @@ public final class DungeonSiteFinder {
         for (int attempt = 0; attempt < 600; attempt++) {
             int x = centerX + level.getRandom().nextInt(257) - 128;
             int z = centerZ + level.getRandom().nextInt(257) - 128;
-            if (x < minX || z < minZ) continue;
-            if (!level.hasChunkAt(new BlockPos(x, level.getMinBuildHeight(), z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            if (y < minY || y >= level.getMaxBuildHeight() - 2) continue;
             BlockPos feet = new BlockPos(x, y, z);
-            if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()) continue;
-            if (!isNaturalGround(level.getBlockState(feet.below()).getBlock())) continue;
-            if (!naturalArea(level, x, z)) continue;
-            if (!mountainShelter(level, x, z, y)) continue;
-            if (nearAnyPlayer(level, feet, 64.0D)) continue;
-            if (DungeonProtection.isProtectedArea(level, feet)) continue;
-            return feet;
+            if (isSafeSite(level, feet, minX, minY, minZ)) return feet;
         }
         return null;
+    }
+
+    public static boolean isSafeSite(ServerLevel level, BlockPos feet, int minX, int minY, int minZ) {
+        int x = feet.getX();
+        int z = feet.getZ();
+        int y = feet.getY();
+        if (x < minX || z < minZ || y < minY || y >= level.getMaxBuildHeight() - 2) return false;
+        if (!level.hasChunkAt(new BlockPos(x, level.getMinBuildHeight(), z))) return false;
+        if (level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) != y) return false;
+        if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()) return false;
+        if (!isNaturalGround(level.getBlockState(feet.below()).getBlock())) return false;
+        if (!naturalArea(level, x, z) || !mountainShelter(level, x, z, y)) return false;
+        if (nearAnyPlayer(level, feet, 64.0D)) return false;
+        return !DungeonProtection.isProtectedArea(level, feet);
     }
 
     private static boolean naturalArea(ServerLevel level, int x, int z) {
