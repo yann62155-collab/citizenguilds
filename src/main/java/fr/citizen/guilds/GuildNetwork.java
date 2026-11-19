@@ -50,6 +50,12 @@ public final class GuildNetwork {
         root.addProperty("hasGuild", guild != null);
         root.addProperty("player", player.getGameProfile().getName());
         root.addProperty("isAdmin", player.hasPermissions(2));
+        GuildSavedData.Guild pendingInvitation = data.pendingInvitationFor(player);
+        root.addProperty("hasInvitation", pendingInvitation != null);
+        if (pendingInvitation != null) {
+            root.addProperty("invitationGuild", pendingInvitation.name);
+            root.addProperty("invitationGuildMembers", pendingInvitation.members.size());
+        }
         JsonArray guildList = new JsonArray();
         for (GuildSavedData.Guild item : data.allGuilds()) {
             JsonObject entry = new JsonObject();
