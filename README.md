@@ -47,11 +47,11 @@ Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Le
 3. Vérifier le candidat avec `/guild dungeon site`.
 4. Poser la porte avec `/guild dungeon portal create`.
 
-Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal. Si WorldGuard est disponible sur le serveur Arclight, les régions protégées sont aussi exclues. L'apparition automatique vérifie les chunks déjà chargés et nécessite un administrateur en ligne dans l'Overworld pour effectuer le scan. Une porte non utilisée se referme automatiquement après deux heures.
+Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal. Si WorldGuard est disponible sur le serveur Arclight, les régions protégées sont aussi exclues. L'apparition automatique vérifie les chunks déjà chargés et nécessite au moins un joueur en ligne dans l'Overworld pour effectuer le scan. Une porte non utilisée se referme automatiquement après deux heures.
 
 ### Lancer une session
 
-- `/guild dungeon start <nom de guilde>` ouvre une session pour une seule guilde.
+- `/guild dungeon start` permet au chef de lancer le donjon de sa propre guilde ; `/guild dungeon start <nom de guilde>` permet à un administrateur de lancer celui d'une autre guilde.
 - Les membres de cette guilde interagissent avec la porte pour entrer dans l'instance.
 - La porte intérieure permet de revenir au site d'entrée.
 - `/guild dungeon status` affiche la vague, les participants et l'état de la session.
