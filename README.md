@@ -2,38 +2,28 @@
 
 Mod de gestion des guildes pour **Minecraft Java 1.21.1**, **NeoForge 21.1.215** et **Java 21**.
 
-## Fonctionnalites implementees
-- Donnees de guilde sauvegardees dans le monde (membres, grades, invitations, banque, Jade et journal).
+## Fonctionnalites
+- Donnees de guilde sauvegardees dans le monde : membres, grades, invitations, banque et journal.
 - Creation, invitation, acceptation, depart, exclusion et promotion.
 - Banque partagee : depot de l'objet tenu en main et retrait par emplacement.
 - Permissions : chef/officier pour gerer et retirer; tous les membres peuvent deposer.
-- Tresor de Jade collectif avec collecte automatique de l'objet configure.
-- Historique des actions recentes.
-- Interface sombre fantasy accessible avec **G**, avec un onglet d'aide aux commandes.
-- Compilation automatisee via GitHub Actions.
+- **Pierre de Jade** : minerai brut obtenu comme butin dans les coffres de donjons, fondu en lingots.
+- **Armure complète en Jade** : casque, plastron, jambières et bottes, avec protection de haut niveau.
+- Butin Jade ajouté aux coffres de donjons vanilla ciblés et aux tables de butin de mods dont le chemin contient dungeon, catacomb ou crypt.
+- Aucune génération de minerai dans les grottes ou le monde ouvert.
+- Interface sombre fantasy accessible avec **G** (tableau de bord visuel en cours de raccordement aux données).
+- Compilation automatisée via GitHub Actions.
+
+## Obtention et fabrication de la Jade
+Le minerai brut `citizenguilds:raw_jade` est ajouté avec 12 % de chance aux coffres de donjons ciblés : donjons simples, mines abandonnées, couloirs/croisements de forteresse et cité antique. Les tables de butin de mods sont aussi prises en compte si leur chemin contient dungeon, catacomb ou crypt.
+Le minerai ne se génère pas dans le monde et ne se mine pas. Fondez-le dans un four ou un haut fourneau pour obtenir `citizenguilds:jade_ingot`. Les lingots servent à fabriquer les quatre pièces d'armure et à réparer l'équipement.
+
+## Commandes de guilde
+- `/guild create <nom>`
+- `/guild invite <joueur>` puis `/guild accept`
+- `/guild info`
+- `/guild deposit` et `/guild withdraw <emplacement> [quantite]`
+- `/guild promote <joueur>`, `/guild kick <joueur>`, `/guild leave`, `/guild disband`
 
 ## Installation
-1. Compilez avec Java 21 et Gradle (le workflow GitHub construit le JAR).
-2. Placez le JAR dans le dossier `mods` du client et du serveur.
-3. Redemarrez le serveur.
-
-## Commandes en jeu
-- `/guild create <nom>`
-- `/guild invite <joueur>` puis le joueur utilise `/guild accept`
-- `/guild info`
-- `/guild deposit` : depose toute la pile tenue en main.
-- `/guild withdraw <emplacement> [quantite]` : les emplacements commencent a 1.
-- `/guild promote <joueur>` : le chef alterne membre/officier.
-- `/guild kick <joueur>`, `/guild leave`, `/guild disband`
-
-## Configuration de la Pierre de Jade
-L'identifiant de l'objet varie selon le mod qui l'ajoute. Un administrateur (permission 2) doit donc le definir une fois :
-`/guild jadeitem namespace:identifiant`
-
-Exemple de forme : `/guild jadeitem monmod:jade` (remplacez par l'identifiant reel de votre objet).
-Lorsqu'un membre possedant cet objet est dans une guilde, le mod convertit automatiquement les objets de son inventaire en points de Jade de guilde, une fois par seconde. Les objets sont consommes et le total est conserve dans les donnees du monde.
-
-## Limites connues
-- Le nom de l'objet Pierre de Jade doit etre configure par un administrateur; aucun identifiant de mod externe n'est suppose.
-- La banque est geree par commandes pour cette version; l'interface est un tableau de bord et un aide-memoire, pas encore un coffre interactif avec synchronisation reseau.
-- Les donnees sont propres a chaque monde/serveur et sont sauvegardees dans le dossier de donnees du monde.
+Compilez avec Java 21/Gradle, puis placez le JAR dans le dossier `mods` du client et du serveur. Le mod doit être présent des deux côtés.
