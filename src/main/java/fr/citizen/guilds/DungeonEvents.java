@@ -167,10 +167,9 @@ public final class DungeonEvents {
         int interval = data.spawnIntervalMinutes() * 60;
         if (++autoSpawnSeconds < interval) return;
 
-        ServerPlayer administrator = overworld.players().stream()
-            .filter(player -> player.hasPermissions(2)).findFirst().orElse(null);
-        if (administrator == null) return;
-        BlockPos site = DungeonSiteFinder.find(overworld, administrator, data.minX(), data.minY(), data.minZ());
+        ServerPlayer referencePlayer = overworld.players().stream().findFirst().orElse(null);
+        if (referencePlayer == null) return;
+        BlockPos site = DungeonSiteFinder.find(overworld, referencePlayer, data.minX(), data.minY(), data.minZ());
         if (site == null) {
             autoSpawnSeconds = Math.max(0, interval - 300);
             return;
