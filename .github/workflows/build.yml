@@ -35,8 +35,9 @@ jobs:
       jar tf "$jar_file" | grep -q "data/citizenguilds/recipes/jade_helmet.json"
    - name: Smoke test dedicated server startup
      run: |
-      printf "eula=true\n" > eula.txt
-      printf "online-mode=false\nserver-port=25565\nlevel-name=world\n" > server.properties
+      mkdir -p run
+      printf "eula=true\n" > run/eula.txt
+      printf "online-mode=false\nserver-port=25565\nlevel-name=world\n" > run/server.properties
       set +e
       timeout --signal=TERM --kill-after=10s 45s gradle runServer --no-daemon --console=plain > /tmp/citizen-server-smoke.log 2>&1
       status=$?
@@ -45,9 +46,9 @@ jobs:
       if [ "$status" -ne 124 ] && [ "$status" -ne 137 ] && [ "$status" -ne 0 ]; then
         exit "$status"
       fi
-      test -f logs/latest.log
-      grep -q "Done (" logs/latest.log
-      if grep -qi "Failed to load datapacks" logs/latest.log; then
+      test -f run/logs/latest.log
+      grep -q "Done (" run/logs/latest.log
+      if grep -qi "Failed to load datapacks" run/logs/latest.log; then
         exit 1
       fi
    - uses: actions/upload-artifact@v4
