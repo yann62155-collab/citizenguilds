@@ -53,6 +53,33 @@ public final class GuildCommands {
                 g.members.forEach((uuid,name)->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+name+" §7- "+g.roles.getOrDefault(uuid,"MEMBER")),false));
                 return 1;
             }))
+            .then(Commands.literal("journal").executes(c -> {
+                ServerPlayer p=c.getSource().getPlayerOrException();
+                GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
+                if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Guildes] §fJournal de "+g.name),false);
+                if(g.journal.isEmpty()) return ok(c.getSource(),"Aucune activite enregistree.");
+                g.journal.stream().limit(20).forEach(line -> c.getSource().sendSuccess(
+                    () -> net.minecraft.network.chat.Component.literal("§7• "+line),false));
+                return 1;
+            }))
+            .then(Commands.literal("bank").executes(c -> {
+                ServerPlayer p=c.getSource().getPlayerOrException();
+                GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
+                if(g==null)return fail(c.getSource(),"Tu n'appartiens a aucune guilde.");
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§6[Guildes] §fBanque de "+g.name+" ("+g.bank.size()+" emplacements)"),false);
+                for(int i=0;i<g.bank.size();i++){
+                    ItemStack stack=g.bank.get(i);
+                    final int slot=i+1;
+                    c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+slot+". §f"+stack.getCount()+"x "+stack.getHoverName().getString()),false);
+                }
+                return 1;
+            }))
+            .then(Commands.literal("jadeinfo").executes(c -> {
+                c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal(
+                    "§6[Guildes] §fPierre de Jade : raw_jade -> four/haut-fourneau -> jade_ingot -> armure complète."),false);
+                return 1;
+            }))
             .then(Commands.literal("disband").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException(); GuildSavedData data=GuildSavedData.get(p.getServer());
                 GuildSavedData.Guild g=data.guildOf(p);
