@@ -129,6 +129,7 @@ public final class DungeonEvents {
 
         int remaining = session.pruneMobIds(level);
         if (session.wave() == 2) applyTrapPulse(server, level, session);
+        else trapCounter = 0;
         if (remaining > 0) return;
         if (session.wave() < 3) {
             session.nextWave();
