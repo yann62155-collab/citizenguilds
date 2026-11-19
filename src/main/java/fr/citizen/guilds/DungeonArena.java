@@ -9,6 +9,8 @@ import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.item.ItemEntity;
 
 /** Builds the dungeon in its own dimension, never modifying player terrain in the Overworld. */
@@ -30,6 +32,8 @@ public final class DungeonArena {
         }
         level.getEntitiesOfClass(Mob.class, arenaBounds).forEach(entity -> entity.discard());
         level.getEntitiesOfClass(ItemEntity.class, arenaBounds).forEach(entity -> entity.discard());
+        level.getEntitiesOfClass(ExperienceOrb.class, arenaBounds).forEach(entity -> entity.discard());
+        level.getEntitiesOfClass(Projectile.class, arenaBounds).forEach(entity -> entity.discard());
 
         clear(level, -16, 16, -84, 14, FLOOR_Y, FLOOR_Y + 7);
         room(level, -9, 9, -9, 9);
