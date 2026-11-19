@@ -54,6 +54,8 @@ public final class DungeonEvents {
             Component.literal("§c[Donjon] §f" + player.getGameProfile().getName()
                 + " est elimine de la session de " + session.guildName() + " (une seule vie)."), false);
         if (session.aliveCount() == 0) {
+            ServerLevel dungeon = player.getServer().getLevel(CitizenDimensions.DUNGEON);
+            if (dungeon != null) session.removeActiveMobs(dungeon);
             session.finish(false);
             player.getServer().getPlayerList().broadcastSystemMessage(
                 Component.literal("§c[Donjon] Toute l'equipe a ete eliminee. La session est un echec."), false);
@@ -72,6 +74,7 @@ public final class DungeonEvents {
         }
         if (session.finished() || session.site() == null || session.participantCount() == 0) return;
         if (session.aliveCount() == 0) {
+            session.removeActiveMobs(level);
             session.finish(false);
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
             return;
