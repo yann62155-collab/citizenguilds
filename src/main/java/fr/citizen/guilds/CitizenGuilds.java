@@ -10,5 +10,6 @@ public final class CitizenGuilds {
         CitizenJadeItems.ITEMS.register(modBus);
         CitizenJadeItems.ARMOR_MATERIALS.register(modBus);
         CitizenDungeonBlocks.BLOCKS.register(modBus);
+        CitizenGuildEntities.ENTITY_TYPES.register(modBus);
     }
 }
