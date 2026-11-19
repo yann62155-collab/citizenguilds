@@ -202,7 +202,8 @@ public final class GuildSavedData extends SavedData {
     }
 
     public static final class Guild {
-        public final String id, leader;\n        public String name;
+        public final String id, leader;
+        public String name;
         public final Map<String, String> members = new LinkedHashMap<>();
         public final Map<String, String> roles = new HashMap<>();
         public final List<ItemStack> bank = new ArrayList<>();
