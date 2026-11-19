@@ -3,8 +3,6 @@ package fr.citizen.guilds;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.Commands;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -55,12 +53,6 @@ public final class GuildCommands {
                 g.members.forEach((uuid,name)->c.getSource().sendSuccess(()->net.minecraft.network.chat.Component.literal("§e"+name+" §7- "+g.roles.getOrDefault(uuid,"MEMBER")),false));
                 return 1;
             }))
-            .then(Commands.literal("jadeitem").requires(s -> s.hasPermission(2)).then(Commands.argument("identifiant",StringArgumentType.word()).executes(c -> {
-                String id=StringArgumentType.getString(c,"identifiant"); ResourceLocation key=ResourceLocation.tryParse(id);
-                if(key==null || !BuiltInRegistries.ITEM.containsKey(key)) return fail(c.getSource(),"Identifiant d'objet inconnu.");
-                GuildSavedData.get(c.getSource().getServer()).setJadeItemId(key.toString());
-                return ok(c.getSource(),"Objet de Jade configure : "+key);
-            })))
             .then(Commands.literal("disband").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException(); GuildSavedData data=GuildSavedData.get(p.getServer());
                 GuildSavedData.Guild g=data.guildOf(p);
