@@ -6,7 +6,7 @@ modId="citizenguilds"
 version="0.1.0"
 displayName="Citizen Guilds"
 authors="Citizen Team"
-description='''Gestion des guildes CITIZEN : membres, grades, banque partagee et aventures.'''
+description='''Gestion des guildes CITIZEN : membres, grades, reserve de ressources, armure de Jade et donjons instancies.'''
 [[dependencies.citizenguilds]]
 modId="neoforge"
 type="required"
