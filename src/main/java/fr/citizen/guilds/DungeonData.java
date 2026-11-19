@@ -54,4 +54,9 @@ public final class DungeonData extends SavedData {
         lastSite = pos == null ? null : pos.immutable();
         setDirty();
     }
+
+    public void clearLastSite() {
+        lastSite = null;
+        setDirty();
+    }
 }
