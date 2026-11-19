@@ -82,7 +82,7 @@ public final class GuildManagementScreen extends Screen {
         g.drawString(font,"Fondez une guilde, rassemblez vos allies",a+16,b+37,WHITE,false);
         g.drawString(font,"et construisez votre legende sur CITIZEN.",a+16,b+54,MUTED,false);
         card(g,a,b+108,142,82,"MEMBRES","—","Effectif de la guilde");
-        card(g,a+153,b+108,142,82,"PIERRES DE JADE","—","Tresor collectif");
+        card(g,a+153,b+108,142,82,"ARMURE DE JADE","RARE","Butin des donjons");
         card(g,a+306,b+108,154,82,"BANQUE","—","Objets partages");
         section(g,a,b+213,"ACTIVITE RECENTE","Les evenements de votre guilde apparaitront ici.");
         g.fill(a,b+249,a+460,b+291,PANEL); g.renderOutline(a,b+249,460,42,LINE);
