@@ -4,7 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 
 /** Builds the dungeon in its own dimension, never modifying player terrain in the Overworld. */
 public final class DungeonArena {
@@ -18,6 +21,10 @@ public final class DungeonArena {
     public static ServerLevel prepare(MinecraftServer server) {
         ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
         if (level == null) return null;
+
+        AABB arenaBounds = new AABB(-16, FLOOR_Y - 5, -85, 16, FLOOR_Y + 10, 15);
+        level.getEntitiesOfClass(Mob.class, arenaBounds).forEach(Entity -> Entity.discard());
+        level.getEntitiesOfClass(ItemEntity.class, arenaBounds).forEach(Entity -> Entity.discard());
 
         clear(level, -16, 16, -84, 14, FLOOR_Y, FLOOR_Y + 7);
         room(level, -9, 9, -9, 9);
