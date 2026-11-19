@@ -73,14 +73,14 @@ public final class DungeonEvents {
             return;
         }
         if (session.finished() || session.site() == null || session.participantCount() == 0) return;
+        ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
+        if (level == null) return;
         if (session.aliveCount() == 0) {
             session.removeActiveMobs(level);
             session.finish(false);
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
             return;
         }
-        ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
-        if (level == null) return;
         boolean atLeastOneOnline = false;
         for (String uuid : session.livingParticipantIds()) {
             ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
