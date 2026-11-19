@@ -13,6 +13,8 @@ public final class DungeonData extends SavedData {
     private int minY = 68;
     private int minZ = 75;
     private int rewardJade = 3;
+    private boolean autoSpawnEnabled = true;
+    private int spawnIntervalMinutes = 30;
     private BlockPos lastSite = null;
 
     public static DungeonData get(MinecraftServer server) {
@@ -26,6 +28,8 @@ public final class DungeonData extends SavedData {
         data.minY = tag.contains("minY") ? tag.getInt("minY") : 68;
         data.minZ = tag.contains("minZ") ? tag.getInt("minZ") : 75;
         data.rewardJade = tag.contains("rewardJade") ? Math.max(0, Math.min(64, tag.getInt("rewardJade"))) : 3;
+        data.autoSpawnEnabled = !tag.contains("autoSpawnEnabled") || tag.getBoolean("autoSpawnEnabled");
+        data.spawnIntervalMinutes = tag.contains("spawnIntervalMinutes") ? Math.max(5, Math.min(1440, tag.getInt("spawnIntervalMinutes"))) : 30;
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
     }
@@ -35,6 +39,8 @@ public final class DungeonData extends SavedData {
         tag.putInt("minY", minY);
         tag.putInt("minZ", minZ);
         tag.putInt("rewardJade", rewardJade);
+        tag.putBoolean("autoSpawnEnabled", autoSpawnEnabled);
+        tag.putInt("spawnIntervalMinutes", spawnIntervalMinutes);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
             tag.putInt("siteX", lastSite.getX());
@@ -48,7 +54,12 @@ public final class DungeonData extends SavedData {
     public int minY() { return minY; }
     public int minZ() { return minZ; }
     public int rewardJade() { return rewardJade; }
+    public boolean autoSpawnEnabled() { return autoSpawnEnabled; }
+    public int spawnIntervalMinutes() { return spawnIntervalMinutes; }
     public BlockPos lastSite() { return lastSite; }
+
+    public void setAutoSpawnEnabled(boolean enabled) { autoSpawnEnabled = enabled; setDirty(); }
+    public void setSpawnIntervalMinutes(int minutes) { spawnIntervalMinutes = Math.max(5, Math.min(1440, minutes)); setDirty(); }
 
     public void setRewardJade(int amount) {
         rewardJade = Math.max(0, Math.min(64, amount));
