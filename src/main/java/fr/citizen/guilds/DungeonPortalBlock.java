@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -14,6 +16,19 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public final class DungeonPortalBlock extends Block {
     public DungeonPortalBlock(BlockBehaviour.Properties properties) { super(properties); }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(3) == 0) {
+            level.addParticle(ParticleTypes.PORTAL,
+                pos.getX() + random.nextDouble(),
+                pos.getY() + 0.5D + (random.nextDouble() - 0.5D) * 0.5D,
+                pos.getZ() + random.nextDouble(),
+                (random.nextDouble() - 0.5D) * 0.4D,
+                (random.nextDouble() - 0.5D) * 0.4D,
+                (random.nextDouble() - 0.5D) * 0.4D);
+        }
+    }
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
