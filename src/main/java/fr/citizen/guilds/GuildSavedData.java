@@ -125,6 +125,21 @@ public final class GuildSavedData extends SavedData {
         guild.log(target.getGameProfile().getName() + " est maintenant " + guild.roles.get(uuid));
         setDirty(); return true;
     }
+    public void autoDepositJade(ServerPlayer player, int amount) {
+        if (amount <= 0 || guildOf(player) == null) return;
+        int remaining = amount;
+        for (int slot = 0; slot < player.getInventory().getContainerSize() && remaining > 0; slot++) {
+            ItemStack carried = player.getInventory().getItem(slot);
+            if (carried.isEmpty() || !net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(carried.getItem()).toString().equals(jadeItemId)) continue;
+            int moved = Math.min(remaining, carried.getCount());
+            ItemStack part = carried.copyWithCount(moved);
+            if (deposit(player, part)) {
+                carried.shrink(moved);
+                remaining -= moved;
+            }
+        }
+    }
+
     public boolean deposit(ServerPlayer player, ItemStack stack) {
         Guild guild = guildOf(player);
         if (guild == null || stack.isEmpty()) return false;
