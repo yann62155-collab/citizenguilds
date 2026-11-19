@@ -26,8 +26,9 @@ Le minerai ne se génère pas dans le monde et ne se mine pas. Fondez-le dans un
 
 ## Commandes de guilde
 - `/guild create <nom>`
-- `/guild invite <numero_hibou> (numéro du registre CitizenHibou)` puis `/guild accept
-| `/guild refuse` | Refuse une invitation de guilde |`
+- `/guild invite <numero_hibou>` : invite le joueur correspondant au numéro CitizenHibou
+- `/guild accept` : accepte une invitation reçue
+- `/guild refuse` : refuse une invitation reçue
 - `/guild list` et `/guild info`
 - `/guild rename \"Nouveau nom\"`
 - `/guild deposit` et `/guild withdraw <emplacement> [quantite]` pour la réserve de ressources
@@ -38,7 +39,7 @@ Le minerai ne se génère pas dans le monde et ne se mine pas. Fondez-le dans un
 La réserve stocke des objets physiques, pas de monnaie. La Pierre de Jade peut y être déposée comme minerai de fabrication. Les statistiques peuvent compter les quantités de minerais stockées, mais jamais les traiter comme une richesse. Le mécanisme de dépôt automatique est basé sur un identifiant d'objet configurable afin de permettre l'ajout d'autres minerais et matériaux de craft dans de futures extensions.
 
 ## Installation
-Compilez avec Java 21/Gradle, puis placez le JAR dans le dossier `mods` du client et du serveur. Le mod doit être présent des deux côtés.
+Installez **Hibou Postal (`hiboupostal`)** et **Citizen Guilds** dans le dossier `mods` du serveur et de chaque client. Les deux mods sont nécessaires pour l'intégration des numéros de hibou.
 
 ## Donjons de guilde
 
