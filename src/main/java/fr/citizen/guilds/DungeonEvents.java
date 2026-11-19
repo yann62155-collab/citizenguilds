@@ -16,6 +16,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = CitizenGuilds.MOD_ID)
@@ -25,6 +26,18 @@ public final class DungeonEvents {
     private static int trapCounter;
     private static int autoSpawnSeconds;
     private DungeonEvents() {}
+
+    @SubscribeEvent
+    public static void protectDungeonBlocks(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || !level.dimension().equals(CitizenDimensions.DUNGEON)) return;
+        if (!(event.getPlayer() instanceof ServerPlayer player) || !player.hasPermissions(2)) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void protectDungeonPlacement(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || !level.dimension().equals(CitizenDimensions.DUNGEON)) return;
+        if (!(event.getEntity() instanceof ServerPlayer player) || !player.hasPermissions(2)) event.setCanceled(true);
+    }
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
