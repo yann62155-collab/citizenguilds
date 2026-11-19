@@ -149,16 +149,32 @@ public final class GuildManagementScreen extends Screen {
         section(g,a,b+213,"ACTIONS RAPIDES","Les commandes sont executees par le serveur.");
     }
     private void renderMembers(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"MEMBRES DE LA GUILDE","Invitez, acceptez, gerez les grades ou quittez la guilde.");
-        card(g,a,b+45,220,90,"INVITATIONS","EN LIGNE","Invitez un joueur connecté");
-        card(g,a+235,b+45,225,90,"ROLES","CHEF / OFFICIER / MEMBRE","Le chef gere les grades");
-        g.drawString(font,"Les actions affichent leur résultat dans le chat du jeu.",a,b+158,MUTED,false);
+        int a=x+176,b=y+103;
+        section(g,a,b,"MEMBRES DE LA GUILDE",snapshot.has("name") ? snapshot.get("name").getAsString()+" • "+snapshot.get("memberCount").getAsInt()+" membre(s)" : "Aucune guilde active");
+        com.google.gson.JsonArray members=snapshot.has("members")?snapshot.getAsJsonArray("members"):new com.google.gson.JsonArray();
+        int yy=b+43;
+        for(int i=0;i<Math.min(8,members.size());i++){
+            com.google.gson.JsonObject m=members.get(i).getAsJsonObject();
+            g.fill(a,yy,a+460,yy+22,PANEL);
+            g.drawString(font,m.get("name").getAsString(),a+10,yy+7,WHITE,false);
+            g.drawString(font,m.get("role").getAsString(),a+330,yy+7,GOLD,false);
+            yy+=25;
+        }
+        if(members.isEmpty())g.drawString(font,"Aucun membre a afficher. Actualisez les donnees.",a,b+52,MUTED,false);
     }
     private void renderBank(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"BANQUE DE GUILDE","Deposez l'objet tenu en main ou retirez par emplacement.");
-        card(g,a,b+45,220,90,"DEPOT","MAIN","Tous les membres peuvent deposer");
-        card(g,a+235,b+45,225,90,"RETRAIT","CHEF / OFFICIER","Retraits soumis aux permissions");
-        g.drawString(font,"Les mouvements sont inscrits dans le journal de guilde.",a,b+158,MUTED,false);
+        int a=x+176,b=y+103;
+        section(g,a,b,"BANQUE DE GUILDE","Depots ouverts aux membres • Retraits chef/officier");
+        com.google.gson.JsonArray items=snapshot.has("bank")?snapshot.getAsJsonArray("bank"):new com.google.gson.JsonArray();
+        int yy=b+43;
+        for(int i=0;i<Math.min(8,items.size());i++){
+            com.google.gson.JsonObject item=items.get(i).getAsJsonObject();
+            g.fill(a,yy,a+460,yy+22,PANEL);
+            g.drawString(font,item.get("slot").getAsString()+". "+item.get("name").getAsString(),a+10,yy+7,WHITE,false);
+            g.drawString(font,"x"+item.get("count").getAsString(),a+410,yy+7,GOLD,false);
+            yy+=25;
+        }
+        if(items.isEmpty())g.drawString(font,"La banque est vide.",a,b+52,MUTED,false);
     }
     private void renderJade(GuiGraphics g,int x,int y) {
         int a=x+176,b=y+103; section(g,a,b,"EQUIPEMENT DE JADE","Minerai rare obtenu dans les coffres de donjons.");
@@ -179,9 +195,16 @@ public final class GuildManagementScreen extends Screen {
             "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre"};
         int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
     }
+    
     private void renderJournal(GuiGraphics g,int x,int y) {
-        int a=x+176,b=y+103; section(g,a,b,"JOURNAL DE GUILDE","Historique des invitations, depots, retraits et promotions.");
+        int a=x+176,b=y+103;
+        section(g,a,b,"JOURNAL DE GUILDE","Historique des actions de la guilde");
         g.fill(a,b+45,a+460,b+190,PANEL); g.renderOutline(a,b+45,460,145,LINE);
-        g.drawString(font,"Utilisez Actualiser le journal pour afficher l'historique dans le chat.",a+12,b+61,MUTED,false);
+        com.google.gson.JsonArray logs=snapshot.has("journal")?snapshot.getAsJsonArray("journal"):new com.google.gson.JsonArray();
+        int yy=b+57;
+        for(int i=0;i<Math.min(7,logs.size());i++){
+            g.drawString(font,"• "+logs.get(i).getAsString(),a+10,yy,MUTED,false); yy+=18;
+        }
+        if(logs.isEmpty())g.drawString(font,"Aucune activite enregistree.",a+12,b+61,MUTED,false);
     }
 }
