@@ -3,13 +3,11 @@ package fr.citizen.guilds;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -35,8 +33,8 @@ public final class GuildNetwork {
     @SubscribeEvent
     public static void register(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
-        registrar.playToServer(Request.TYPE, (StreamCodec) Request.CODEC, GuildNetwork::handleRequest);
-        registrar.playToClient(Snapshot.TYPE, (StreamCodec) Snapshot.CODEC, GuildNetwork::handleSnapshot);
+        registrar.playToServer(Request.TYPE, Request.CODEC, GuildNetwork::handleRequest);
+        registrar.playToClient(Snapshot.TYPE, Snapshot.CODEC, GuildNetwork::handleSnapshot);
     }
 
     private static void handleRequest(Request request, IPayloadContext context) {
