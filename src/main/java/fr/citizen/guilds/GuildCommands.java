@@ -154,8 +154,11 @@ public final class GuildCommands {
                     DungeonData data = DungeonData.get(c.getSource().getServer());
                     var site = data.lastSite();
                     var level = c.getSource().getServer().overworld();
-                    if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                        level.removeBlock(site, false);
+                    if (site != null) {
+                        level.getChunkAt(site);
+                        if (level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                            level.removeBlock(site, false);
+                    }
                     data.clearLastSite();
                     return ok(c.getSource(), "Dernier site et porte eventuelle effaces.");
                 }))
@@ -181,7 +184,8 @@ public final class GuildCommands {
                         var site = data.lastSite();
                         if (site == null) return fail(c.getSource(), "Aucun site enregistre.");
                         var level = c.getSource().getServer().overworld();
-                        if (!level.hasChunkAt(site) || !level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
+                        level.getChunkAt(site);
+                        if (!level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                             return fail(c.getSource(), "Aucune porte Citizen n'est presente sur le site.");
                         level.removeBlock(site, false);
                         data.clearLastSite();
