@@ -219,7 +219,7 @@ public final class GuildManagementScreen extends Screen {
             "/guild kick <joueur> - Exclure un membre","/guild leave - Quitter","/guild disband - Dissoudre",
             "/guild dungeon status - Etat de la session","/guild dungeon portal create - Placer la porte (OP)",
             "/guild dungeon start <guilde> - Ouvrir le donjon (OP)"};
-        int yy=b+43; for(String line:lines){g.fill(a,yy-3,a+460,yy+15,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=21;}
+        int yy=b+43; for(String line:lines){g.fill(a,yy-2,a+460,yy+14,PANEL);g.drawString(font,line,a+9,yy,MUTED,false);yy+=17;}
     }
     
     private void renderAdmin(GuiGraphics g,int x,int y) {
