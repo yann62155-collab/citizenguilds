@@ -15,6 +15,7 @@ public final class DungeonData extends SavedData {
     private int rewardJade = 3;
     private boolean autoSpawnEnabled = true;
     private int spawnIntervalMinutes = 30;
+    private long portalSpawnGameTime;
     private BlockPos lastSite = null;
 
     public static DungeonData get(MinecraftServer server) {
@@ -30,6 +31,7 @@ public final class DungeonData extends SavedData {
         data.rewardJade = tag.contains("rewardJade") ? Math.max(0, Math.min(64, tag.getInt("rewardJade"))) : 3;
         data.autoSpawnEnabled = !tag.contains("autoSpawnEnabled") || tag.getBoolean("autoSpawnEnabled");
         data.spawnIntervalMinutes = tag.contains("spawnIntervalMinutes") ? Math.max(5, Math.min(1440, tag.getInt("spawnIntervalMinutes"))) : 30;
+        data.portalSpawnGameTime = tag.getLong("portalSpawnGameTime");
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
     }
@@ -41,6 +43,7 @@ public final class DungeonData extends SavedData {
         tag.putInt("rewardJade", rewardJade);
         tag.putBoolean("autoSpawnEnabled", autoSpawnEnabled);
         tag.putInt("spawnIntervalMinutes", spawnIntervalMinutes);
+        tag.putLong("portalSpawnGameTime", portalSpawnGameTime);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
             tag.putInt("siteX", lastSite.getX());
@@ -56,7 +59,10 @@ public final class DungeonData extends SavedData {
     public int rewardJade() { return rewardJade; }
     public boolean autoSpawnEnabled() { return autoSpawnEnabled; }
     public int spawnIntervalMinutes() { return spawnIntervalMinutes; }
+    public long portalSpawnGameTime() { return portalSpawnGameTime; }
     public BlockPos lastSite() { return lastSite; }
+
+    public void setPortalSpawnGameTime(long gameTime) { portalSpawnGameTime = gameTime; setDirty(); }
 
     public void setAutoSpawnEnabled(boolean enabled) { autoSpawnEnabled = enabled; setDirty(); }
     public void setSpawnIntervalMinutes(int minutes) { spawnIntervalMinutes = Math.max(5, Math.min(1440, minutes)); setDirty(); }
@@ -72,11 +78,13 @@ public final class DungeonData extends SavedData {
 
     public void setLastSite(BlockPos pos) {
         lastSite = pos == null ? null : pos.immutable();
+        if (pos == null) portalSpawnGameTime = 0L;
         setDirty();
     }
 
     public void clearLastSite() {
         lastSite = null;
+        portalSpawnGameTime = 0L;
         setDirty();
     }
 }
