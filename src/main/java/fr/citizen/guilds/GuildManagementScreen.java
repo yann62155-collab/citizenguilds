@@ -51,8 +51,10 @@ public final class GuildManagementScreen extends Screen {
         switch(tab) {
             case "overview" -> {
                 primary=field(a+16,b+68,205,"Nom de la guilde");
-                action("Fonder ma guilde",a+232,b+67,210,()->run("guild create "+safe(primary.getValue())));
-                action("Voir ma guilde",a,b+315,140,()->GuildNetwork.requestSync());
+                action("Fonder ma guilde",a+232,b+67,210,()->run("guild create \\"" + safe(primary.getValue()) + "\\""));
+                secondary=field(a,b+258,205,"Nouveau nom de guilde");
+                action("Renommer",a+215,b+257,140,()->run("guild rename \\"" + safe(secondary.getValue()) + "\\""));
+                action("Actualiser",a+365,b+257,95,()->GuildNetwork.requestSync());
             }
             case "members" -> {
                 primary=field(a,b+208,205,"Pseudo du joueur");
