@@ -183,6 +183,19 @@ public final class DungeonSessionData extends SavedData {
         return living;
     }
 
+    public void removeActiveMobs(ServerLevel level) {
+        for (String id : activeMobIds) {
+            try {
+                Entity entity = level.getEntity(UUID.fromString(id));
+                if (entity != null) entity.discard();
+            } catch (IllegalArgumentException ignored) {
+                // Ignore corrupted UUID entries in an old session save.
+            }
+        }
+        activeMobIds.clear();
+        setDirty();
+    }
+
     public void end() {
         active = false;
         finished = false;
