@@ -89,7 +89,7 @@ public final class GuildNetwork {
         JsonArray journal = new JsonArray();
         for (String line : guild.journal) journal.add(line);
         root.add("journal", journal);
-        root.addProperty("jadeItem", data.getJadeItemId());
+        root.addProperty("autoDepositItem", data.getAutoDepositItemId());
         return root.toString();
     }
 
