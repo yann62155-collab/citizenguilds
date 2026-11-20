@@ -186,6 +186,37 @@ public final class GuildSavedData extends SavedData {
         guild.log(target.getGameProfile().getName() + " est maintenant " + guild.roles.get(uuid));
         setDirty(); return true;
     }
+    /** Exclusion by UUID so that offline members can also be managed from the menu. */
+    public boolean kickByUuid(ServerPlayer actor, String targetUuid) {
+        Guild guild = guildOf(actor);
+        if (guild == null || targetUuid == null || !guild.leader.equals(actor.getUUID().toString())) return false;
+        if (targetUuid.equals(actor.getUUID().toString()) || !guild.id.equals(membership.get(targetUuid))) return false;
+        String name = guild.members.getOrDefault(targetUuid, "?");
+        guild.members.remove(targetUuid); guild.roles.remove(targetUuid); membership.remove(targetUuid);
+        try {
+            ServerPlayer online = actor.getServer().getPlayerList().getPlayer(UUID.fromString(targetUuid));
+            if (online != null) online.sendSystemMessage(net.minecraft.network.chat.Component.literal("§c[Guildes] Tu as ete exclu de la guilde " + guild.name + "."));
+        } catch (IllegalArgumentException ignored) { }
+        guild.log(name + " a ete exclu par " + actor.getGameProfile().getName());
+        setDirty(); return true;
+    }
+
+    /** Toggles MEMBER / OFFICER by UUID (leader only). */
+    public boolean promoteByUuid(ServerPlayer actor, String targetUuid) {
+        Guild guild = guildOf(actor);
+        if (guild == null || targetUuid == null || !guild.leader.equals(actor.getUUID().toString())) return false;
+        if (!guild.id.equals(membership.get(targetUuid)) || targetUuid.equals(guild.leader)) return false;
+        String role = guild.roles.getOrDefault(targetUuid, "MEMBER");
+        guild.roles.put(targetUuid, role.equals("OFFICER") ? "MEMBER" : "OFFICER");
+        String name = guild.members.getOrDefault(targetUuid, "?");
+        try {
+            ServerPlayer online = actor.getServer().getPlayerList().getPlayer(UUID.fromString(targetUuid));
+            if (online != null) online.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Guildes] Ton grade est maintenant : " + guild.roles.get(targetUuid) + "."));
+        } catch (IllegalArgumentException ignored) { }
+        guild.log(name + " est maintenant " + guild.roles.get(targetUuid));
+        setDirty(); return true;
+    }
+
     public void autoDepositResource(ServerPlayer player, int amount) {
         if (amount <= 0 || guildOf(player) == null) return;
         int remaining = amount;

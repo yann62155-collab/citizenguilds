@@ -117,13 +117,14 @@ public final class GuildCommands {
                                 int y = IntegerArgumentType.getInteger(c, "y");
                                 int z = IntegerArgumentType.getInteger(c, "z");
                                 DungeonData.get(c.getSource().getServer()).setMinimum(x, y, z);
-                                return ok(c.getSource(), "Limite minimale des donjons definie : X " + x + ", Y " + y + ", Z " + z + ".");
+                                return ok(c.getSource(), "Zone des donjons : X >= " + x + ", Y >= " + y + ", Z >= " + z + ".");
                             })))))
                 .then(Commands.literal("autoscan").requires(source -> source.hasPermission(2))
                     .then(Commands.argument("active", BoolArgumentType.bool()).executes(c -> {
                         boolean enabled = BoolArgumentType.getBool(c, "active");
                         DungeonData.get(c.getSource().getServer()).setAutoSpawnEnabled(enabled);
-                        return ok(c.getSource(), "Apparition automatique des portails : " + (enabled ? "activee" : "desactivee") + ".");
+                        if (enabled) DungeonData.get(c.getSource().getServer()).setNextSpawnGameTime(0L);
+                        return ok(c.getSource(), "Apparition automatique des portes : " + (enabled ? "activee (premiere porte dans ~2 min)" : "desactivee") + ".");
                     })))
                 .then(Commands.literal("interval").requires(source -> source.hasPermission(2))
                     .then(Commands.argument("minutes", IntegerArgumentType.integer(5, 1440)).executes(c -> {
@@ -137,77 +138,54 @@ public final class GuildCommands {
                         DungeonData.get(c.getSource().getServer()).setRewardJade(amount);
                         return ok(c.getSource(), "Recompense de donjon definie a " + amount + " minerai(s) de Pierre de Jade par survivant.");
                     })))
+                .then(Commands.literal("spawnnow").requires(source -> source.hasPermission(2)).executes(c ->
+                    result(c.getSource(), DungeonService.spawnNow(c.getSource().getServer()))))
+                .then(Commands.literal("autostatus").executes(c ->
+                    ok(c.getSource(), DungeonService.statusLine(c.getSource().getServer()))))
                 .then(Commands.literal("scan").requires(source -> source.hasPermission(2)).executes(c -> {
                     ServerPlayer player = c.getSource().getPlayerOrException();
                     if (player.serverLevel() != player.getServer().overworld())
                         return fail(c.getSource(), "Le scan doit etre lance dans l'Overworld.");
+                    if (DungeonService.isPortalPresent(player.getServer()))
+                        return fail(c.getSource(), "Une porte existe deja. Retire-la ou termine l'expedition avant un nouveau scan.");
                     DungeonData data = DungeonData.get(player.getServer());
-                    var previousSite = data.lastSite();
-                    if (previousSite != null) {
-                        player.serverLevel().getChunkAt(previousSite);
-                        if (player.serverLevel().getBlockState(previousSite).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                            return fail(c.getSource(), "Une porte existe deja. Retire-la ou termine la session avant un nouveau scan.");
-                        data.clearLastSite();
-                    }
-                    var site = DungeonSiteFinder.find(player.serverLevel(), player, data.minX(), data.minY(), data.minZ());
-                    if (site == null)
-                        return fail(c.getSource(), "Aucun site naturel adapte trouve a proximite. Eloigne-toi des constructions et relance le scan.");
-                    data.setLastSite(site);
-                    player.getServer().getPlayerList().broadcastSystemMessage(
-                        net.minecraft.network.chat.Component.literal("§6[Donjon] §fSite naturel potentiel detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld). Aucun bloc n'a ete modifie."), false);
-                    return 1;
+                    var search = DungeonSiteFinder.findNear(player.serverLevel(), player, data);
+                    if (search.site() == null) return fail(c.getSource(), search.note() + " Eloigne-toi des constructions et relance le scan.");
+                    data.clearLastSite();
+                    data.setLastSite(search.site());
+                    var site = search.site();
+                    return ok(c.getSource(), "Site naturel detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ()
+                        + ". Aucun bloc modifie. Utilise /guild dungeon portal create pour y construire la porte.");
                 }))
                 .then(Commands.literal("reset").requires(source -> source.hasPermission(2)).executes(c -> {
-                    DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
-                    if (session.active()) return fail(c.getSource(), "Ferme d'abord la session active.");
-                    DungeonData data = DungeonData.get(c.getSource().getServer());
-                    var site = data.lastSite();
-                    var level = c.getSource().getServer().overworld();
-                    if (site != null) {
-                        level.getChunkAt(site);
-                        if (level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                            level.removeBlock(site, false);
-                    }
-                    data.clearLastSite();
-                    return ok(c.getSource(), "Dernier site et porte eventuelle effaces.");
+                    if (DungeonSessionData.get(c.getSource().getServer()).active()) return fail(c.getSource(), "Ferme d'abord l'expedition active.");
+                    DungeonService.removePortal(c.getSource().getServer());
+                    return ok(c.getSource(), "Dernier site et porte eventuelle effaces. Prochaine porte automatique programmee.");
                 }))
                 .then(Commands.literal("portal").requires(source -> source.hasPermission(2))
                     .then(Commands.literal("create").executes(c -> {
-                        DungeonData data = DungeonData.get(c.getSource().getServer());
+                        var server = c.getSource().getServer();
+                        if (DungeonService.isPortalPresent(server)) return fail(c.getSource(), "Une porte est deja ouverte.");
+                        DungeonData data = DungeonData.get(server);
                         var site = data.lastSite();
-                        if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord /guild dungeon scan.");
-                        var level = c.getSource().getServer().overworld();
-                        ServerPlayer requester = c.getSource().getEntity() instanceof ServerPlayer sp ? sp : null;
-                        if (!DungeonSiteFinder.isSafeSite(level, site, data.minX(), data.minY(), data.minZ(), requester))
-                            return fail(c.getSource(), "Le site ne respecte plus les criteres de securite. Relance /guild dungeon scan.");
-                        level.setBlock(site, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
-                        data.setPortalSpawnGameTime(level.getGameTime());
-                        c.getSource().getServer().getPlayerList().broadcastSystemMessage(
-                            net.minecraft.network.chat.Component.literal("§6[Donjon] §fUne porte ancienne vient d'apparaitre : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld)."), false);
-                        return ok(c.getSource(), "Porte temporaire placee en X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + ".");
+                        if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord /guild dungeon scan (ou /guild dungeon spawnnow).");
+                        data.clearLastSite();
+                        return result(c.getSource(), DungeonService.placePortal(server, site));
                     }))
                     .then(Commands.literal("remove").executes(c -> {
-                        DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
-                        if (session.active()) return fail(c.getSource(), "Termine d'abord la session avec /guild dungeon end.");
-                        DungeonData data = DungeonData.get(c.getSource().getServer());
-                        var site = data.lastSite();
-                        if (site == null) return fail(c.getSource(), "Aucun site enregistre.");
-                        var level = c.getSource().getServer().overworld();
-                        level.getChunkAt(site);
-                        if (!level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                            return fail(c.getSource(), "Aucune porte Citizen n'est presente sur le site.");
-                        level.removeBlock(site, false);
-                        data.clearLastSite();
-                        return ok(c.getSource(), "Porte temporaire retiree. Le terrain naturel autour n'a pas ete touche.");
+                        var server = c.getSource().getServer();
+                        if (DungeonSessionData.get(server).active()) return fail(c.getSource(), "Termine d'abord l'expedition avec /guild dungeon end.");
+                        if (!DungeonService.isPortalPresent(server)) return fail(c.getSource(), "Aucune porte n'est ouverte.");
+                        DungeonService.removePortal(server);
+                        return ok(c.getSource(), "Porte retiree. Prochaine porte automatique programmee.");
                     })))
                 .then(Commands.literal("start")
                     .executes(c -> {
                         ServerPlayer requester = c.getSource().getPlayerOrException();
-                        GuildSavedData data = GuildSavedData.get(c.getSource().getServer());
-                        GuildSavedData.Guild guild = data.guildOf(requester);
-                        if (guild == null || !guild.leader.equals(requester.getUUID().toString()))
-                            return fail(c.getSource(), "Seul le chef de guilde peut lancer le donjon sans argument.");
-                        return startDungeon(c.getSource(), guild);
+                        GuildSavedData.Guild guild = GuildSavedData.get(c.getSource().getServer()).guildOf(requester);
+                        if (guild == null || !guild.canManage(requester.getUUID().toString()))
+                            return fail(c.getSource(), "Seuls le chef et les officiers peuvent lancer le donjon de leur guilde.");
+                        return result(c.getSource(), DungeonService.startSession(c.getSource().getServer(), guild));
                     })
                     .then(Commands.argument("guilde", StringArgumentType.greedyString()).executes(c -> {
                         if (!c.getSource().hasPermission(2)) return fail(c.getSource(), "Seul un administrateur peut lancer le donjon pour une autre guilde.");
@@ -215,42 +193,21 @@ public final class GuildCommands {
                         GuildSavedData.Guild guild = GuildSavedData.get(c.getSource().getServer()).allGuilds().stream()
                             .filter(g -> g.name.equalsIgnoreCase(name)).findFirst().orElse(null);
                         if (guild == null) return fail(c.getSource(), "Guilde introuvable.");
-                        return startDungeon(c.getSource(), guild);
+                        return result(c.getSource(), DungeonService.startSession(c.getSource().getServer(), guild));
                     })))
-                .then(Commands.literal("end").requires(source -> source.hasPermission(2)).executes(c -> {
-                    DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
-                    if (!session.active()) return fail(c.getSource(), "Aucune session active.");
-                    String guildName = session.guildName();
-                    var site = session.site();
-                    var dungeonLevel = c.getSource().getServer().getLevel(CitizenDimensions.DUNGEON);
-                    if (dungeonLevel != null) session.removeActiveMobs(dungeonLevel);
-                    var overworld = c.getSource().getServer().overworld();
-                    for (String uuid : session.participantIds()) {
-                        ServerPlayer participant = c.getSource().getServer().getPlayerList().getPlayer(java.util.UUID.fromString(uuid));
-                        if (participant != null && participant.serverLevel() != overworld) {
-                            BlockPos returnPos = site == null ? overworld.getSharedSpawnPos() : site.offset(2, 0, 2);
-                            participant.teleportTo(overworld, returnPos.getX() + 0.5D, returnPos.getY(), returnPos.getZ() + 0.5D,
-                                participant.getYRot(), participant.getXRot());
-                        }
-                    }
-                    session.end();
-                    var level = overworld;
-                    if (site != null && level.hasChunkAt(site) && level.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                        level.removeBlock(site, false);
-                    DungeonData.get(c.getSource().getServer()).clearLastSite();
-                    return ok(c.getSource(), "Session de " + guildName + " fermee. La porte a ete retiree si son emplacement etait intact.");
-                }))
+                .then(Commands.literal("end").requires(source -> source.hasPermission(2)).executes(c ->
+                    result(c.getSource(), DungeonService.endSession(c.getSource().getServer(),
+                        "§7[Donjon] L'expedition a ete fermee par un administrateur."))))
                 .then(Commands.literal("status").executes(c -> {
                     DungeonSessionData session = DungeonSessionData.get(c.getSource().getServer());
-                    if (!session.active()) return ok(c.getSource(), "Aucune session de donjon active.");
+                    if (!session.active()) return ok(c.getSource(), "Aucune expedition en cours. " + DungeonService.statusLine(c.getSource().getServer()));
                     String state = session.finished() ? (session.victory() ? "VICTOIRE" : "ECHEC") : "EN COURS";
-                    return ok(c.getSource(), "Session " + session.guildName() + " | Etat : " + state + " | Vague : " + session.wave() + "/3 | Participants : " + session.participantCount() + " | Encore en vie : " + session.aliveCount() + " | Porte : " + session.site().getX() + " " + session.site().getY() + " " + session.site().getZ() + ".");
+                    return ok(c.getSource(), "Expedition " + session.guildName() + " | Etat : " + state + " | Vague : " + session.wave() + "/3 | Participants : " + session.participantCount() + " | En vie : " + session.aliveCount() + ".");
                 }))
                 .then(Commands.literal("site").executes(c -> {
-                    DungeonData data = DungeonData.get(c.getSource().getServer());
-                    var site = data.lastSite();
-                    if (site == null) return fail(c.getSource(), "Aucun site de donjon n'a encore ete valide.");
-                    return ok(c.getSource(), "Dernier site detecte : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld).");
+                    var site = DungeonData.get(c.getSource().getServer()).lastSite();
+                    if (site == null) return fail(c.getSource(), "Aucun site de donjon enregistre.");
+                    return ok(c.getSource(), "Site enregistre : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld).");
                 }))
             )
             .then(Commands.literal("journal").executes(c -> {
@@ -297,24 +254,8 @@ public final class GuildCommands {
             }))
         );
     }
-    private static int startDungeon(net.minecraft.commands.CommandSourceStack source, GuildSavedData.Guild guild) {
-        var server = source.getServer();
-        var site = DungeonData.get(server).lastSite();
-        if (site == null) return fail(source, "Aucun site valide. Attends une porte ou lance /guild dungeon scan.");
-        var overworld = server.overworld();
-        if (!overworld.hasChunkAt(site) || !overworld.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-            return fail(source, "La porte temporaire n'est pas placee ou son chunk n'est pas charge.");
-        DungeonSessionData session = DungeonSessionData.get(server);
-        if (session.active()) return fail(source, "Une session est deja active. Termine-la avant d'en lancer une autre.");
-        ServerLevel dungeon = DungeonArena.prepare(server);
-        if (dungeon == null) return fail(source, "Le monde d'instance est indisponible ou un joueur s'y trouve deja.");
-        if (!session.start(guild.id, guild.name, site)) return fail(source, "Impossible de demarrer cette session.");
-        GuildSavedData.get(server).recordDungeonStart(guild.id);
-        server.getPlayerList().broadcastSystemMessage(
-            net.minecraft.network.chat.Component.literal("§6[Donjon] §fLa session de " + guild.name
-                + " est ouverte. Les membres peuvent entrer par la porte en X " + site.getX()
-                + ", Y " + site.getY() + ", Z " + site.getZ() + "."), false);
-        return 1;
+    private static int result(net.minecraft.commands.CommandSourceStack source, DungeonService.Result result) {
+        return result.ok() ? ok(source, result.message()) : fail(source, result.message());
     }
 
     private static int withdraw(net.minecraft.commands.CommandSourceStack source,int slot,int count) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

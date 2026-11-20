@@ -14,7 +14,7 @@ Mod de gestion des guildes pour **Minecraft Java 1.21.1**, **NeoForge 21.1.215**
 - **Armure complète en Jade** : casque, plastron, jambières et bottes, avec protection de haut niveau.
 - Butin Jade ajouté aux coffres de donjons vanilla ciblés et aux tables de butin de mods dont le chemin contient dungeon, catacomb ou crypt.
 - Aucune génération de minerai dans les grottes ou le monde ouvert.
-- Interface sombre fantasy accessible avec **G**, avec synchronisation des membres, grades, réserve de ressources et journal depuis le serveur.
+- Menu de guilde médiéval accessible avec **N** (onglets Accueil, Membres, Réserve, Donjon, Journal, Admin) : chaque bouton agit directement sur le serveur, la réserve affiche les vrais objets, les membres hors ligne sont gérables (promouvoir, exclure), et le menu se met à jour toutes les 5 secondes.
 - Ramassage automatique de la ressource configurée vers la réserve de ressources de la guilde du joueur. Le système est générique et pourra accueillir d'autres minerais dans de futures extensions.
 - Ressource à dépôt automatique configurable par un administrateur avec `/guild resourceitem namespace:objet` (par défaut `citizenguilds:raw_jade`).
 - Annuaire des guildes et renommage par le chef.
@@ -43,32 +43,21 @@ Installez **Hibou Postal (`hiboupostal`)** et **Citizen Guilds** dans le dossier
 
 ## Donjons de guilde
 
-Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon`. Après installation ou mise à jour du JAR, effectue un redémarrage complet du serveur pour charger la dimension. Les salles et les pièges sont construits dans cette dimension isolée : le terrain du monde principal n'est pas creusé ni remplacé.
+Le système de donjon utilise une dimension dédiée `citizenguilds:dungeon` (redémarrage complet du serveur après installation). Le terrain du monde principal n'est jamais creusé : seule la porte (petit monument) est posée puis retirée.
 
-### Préparer un site (administrateur)
+### Cycle automatique
+1. Toutes les `interval` minutes (30 par défaut, première porte ~2 min après le démarrage), une **porte ancienne** apparaît sur un terrain naturel et plat de la zone autorisée (X ≥ minX, Y ≥ minY, Z ≥ minZ). La recherche se fait autour des joueurs présents dans la zone, sinon sur du terrain déjà généré de la zone (jamais de génération de nouveaux chunks). En cas d'échec, nouvel essai chaque minute.
+2. **Le premier membre d'une guilde qui fait clic droit sur la porte ouvre l'expédition** pour sa guilde et entre. Les autres membres de la guilde le rejoignent par la même porte.
+3. Trois salles : zombies/araignées, squelettes/husks avec pièges runiques, puis le Gardien des profondeurs. Une seule vie.
+4. Victoire ou défaite : retour automatique à la surface 20 secondes plus tard, la porte disparaît et la suivante est programmée.
+5. Une porte que personne n'utilise se referme après 2 heures. Une expédition abandonnée (personne dans le donjon pendant 10 min, ou personne entré après 5 min) est fermée automatiquement.
 
-1. Définir les coordonnées minimales autorisées : `/guild dungeon min <x> <y> <z>`.
-2. Se placer dans l'Overworld, dans une zone où les chunks sont déjà chargés, puis lancer `/guild dungeon scan`.
-3. Vérifier le candidat avec `/guild dungeon site`.
-4. Poser la porte avec `/guild dungeon portal create`.
+### Commandes administrateur
+- `/guild dungeon autostatus` : état du cycle automatique et raison du dernier échec de recherche.
+- `/guild dungeon spawnnow` : fait apparaître une porte tout de suite.
+- `/guild dungeon autoscan true|false`, `/guild dungeon interval <minutes>`, `/guild dungeon reward <quantite>`.
+- `/guild dungeon min <x> <y> <z>` : zone autorisée.
+- `/guild dungeon scan` puis `/guild dungeon portal create` : placement manuel ; `/guild dungeon portal remove`, `/guild dungeon reset`.
+- `/guild dungeon start [guilde]`, `/guild dungeon end`, `/guild dungeon status`, `/guild top dungeons`.
 
-Le scanner recherche autour de l'administrateur une surface naturelle, éloignée des joueurs et avec du relief. Il ne modifie aucun bloc du monde principal. Si WorldGuard est disponible sur le serveur Arclight, les régions protégées sont aussi exclues. L'apparition automatique vérifie les chunks déjà chargés et nécessite au moins un joueur en ligne dans l'Overworld pour effectuer le scan. Une porte non utilisée se referme automatiquement après deux heures.
-
-### Lancer une session
-
-- `/guild dungeon start` permet au chef de lancer le donjon de sa propre guilde ; `/guild dungeon start <nom de guilde>` permet à un administrateur de lancer celui d'une autre guilde.
-- Les membres de cette guilde interagissent avec la porte pour entrer dans l'instance.
-- La porte intérieure permet de revenir au site d'entrée.
-- `/guild dungeon status` affiche la vague, les participants et l'état de la session.
-- `/guild dungeon autoscan true|false` active ou désactive l'apparition automatique des portes (activée par défaut).
-- `/guild dungeon interval <minutes>` règle le délai entre apparitions (5 à 1440 minutes, 30 par défaut).
-- `/guild dungeon reward <quantite>` règle la récompense en minerai de Jade par survivant (0 à 64, 3 par défaut).
-- `/guild dungeon end` ferme la session, retire les créatures suivies et ramène les participants connectés dans l'Overworld.
-- `/guild top dungeons` classe les guildes par victoires en donjon ; `/guild top` conserve le classement d'activité de dépôt.
-- `/guild dungeon portal remove` retire la porte extérieure après la fermeture.
-
-### Déroulement
-
-Le donjon comporte trois zones successives : une salle d'entrée, une salle intermédiaire avec pièges au sol, puis une salle de boss. Les vagues comprennent zombies et araignées, squelettes et husks, puis un Gardien des profondeurs (Ravager renforcé) accompagné de vindicateurs. Une mort élimine définitivement le joueur de la session. Les survivants reçoivent chacun 3 minerais de Pierre de Jade ; les récompenses des joueurs déconnectés sont conservées jusqu'à leur reconnexion. Les victoires et éliminations alimentent les statistiques de guilde.
-
-Une seule session globale peut être active à la fois. Les sessions et les éliminations sont sauvegardées dans les données du monde.
+Tout cela est aussi disponible dans l'onglet **Admin** du menu (touche N).

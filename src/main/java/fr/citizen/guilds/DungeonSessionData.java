@@ -28,6 +28,8 @@ public final class DungeonSessionData extends SavedData {
     private String guildId = "";
     private String guildName = "";
     private BlockPos site;
+    private long startedGameTime;
+    private long finishedGameTime;
     private final Map<String, String> participants = new HashMap<>();
     private final Set<String> eliminated = new HashSet<>();
     private final List<String> activeMobIds = new ArrayList<>();
@@ -47,6 +49,8 @@ public final class DungeonSessionData extends SavedData {
         data.wave = tag.getInt("wave");
         data.guildId = tag.getString("guildId");
         data.guildName = tag.getString("guildName");
+        data.startedGameTime = tag.getLong("startedGameTime");
+        data.finishedGameTime = tag.getLong("finishedGameTime");
         if (tag.getBoolean("hasSite")) data.site = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         ListTag players = tag.getList("participants", CompoundTag.TAG_COMPOUND);
         for (int i = 0; i < players.size(); i++) {
@@ -73,6 +77,8 @@ public final class DungeonSessionData extends SavedData {
         tag.putInt("wave", wave);
         tag.putString("guildId", guildId);
         tag.putString("guildName", guildName);
+        tag.putLong("startedGameTime", startedGameTime);
+        tag.putLong("finishedGameTime", finishedGameTime);
         tag.putBoolean("hasSite", site != null);
         if (site != null) {
             tag.putInt("siteX", site.getX());
@@ -114,6 +120,10 @@ public final class DungeonSessionData extends SavedData {
     public String guildId() { return guildId; }
     public String guildName() { return guildName; }
     public BlockPos site() { return site; }
+    public long startedGameTime() { return startedGameTime; }
+    public long finishedGameTime() { return finishedGameTime; }
+    public void setStartedGameTime(long time) { startedGameTime = time; setDirty(); }
+    public void setFinishedGameTime(long time) { finishedGameTime = time; setDirty(); }
     public int participantCount() { return participants.size(); }
     public int aliveCount() { return participants.size() - eliminated.size(); }
     public boolean isEliminated(String uuid) { return eliminated.contains(uuid); }
@@ -129,6 +139,8 @@ public final class DungeonSessionData extends SavedData {
         guildId = id;
         guildName = name;
         site = pos.immutable();
+        startedGameTime = 0L;
+        finishedGameTime = 0L;
         participants.clear();
         eliminated.clear();
         activeMobIds.clear();
@@ -233,6 +245,8 @@ public final class DungeonSessionData extends SavedData {
         guildId = "";
         guildName = "";
         site = null;
+        startedGameTime = 0L;
+        finishedGameTime = 0L;
         participants.clear();
         eliminated.clear();
         activeMobIds.clear();

@@ -44,16 +44,29 @@ public final class DungeonPortalBlock extends Block {
                     serverPlayer.getYRot(), serverPlayer.getXRot());
                 return InteractionResult.CONSUME;
             }
-            BlockPos exit = session.site();
+            BlockPos exit = DungeonService.exitPosition(serverPlayer.getServer().overworld(), session.site());
             serverPlayer.teleportTo(serverPlayer.getServer().overworld(),
-                exit.getX() + 2.5D, exit.getY(), exit.getZ() + 2.5D,
+                exit.getX() + 0.5D, exit.getY(), exit.getZ() + 0.5D,
                 serverPlayer.getYRot(), serverPlayer.getXRot());
             serverPlayer.sendSystemMessage(Component.literal("§6[Donjon] Tu as quitte l'instance. Tant que tu n'es pas elimine, tu peux y retourner par la porte."));
             return InteractionResult.CONSUME;
         }
         if (!session.active()) {
-            serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Aucun donjon n'est actuellement ouvert."));
-            return InteractionResult.CONSUME;
+            GuildSavedData.Guild guild = GuildSavedData.get(serverPlayer.getServer()).guildOf(serverPlayer);
+            if (guild == null) {
+                serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Seuls les membres d'une guilde peuvent ouvrir cette porte. Fonde ou rejoins une guilde avec la touche N."));
+                return InteractionResult.CONSUME;
+            }
+            DungeonData data = DungeonData.get(serverPlayer.getServer());
+            if (!pos.equals(data.lastSite())) {
+                serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] Cette porte est eteinte."));
+                return InteractionResult.CONSUME;
+            }
+            DungeonService.Result started = DungeonService.startSession(serverPlayer.getServer(), guild);
+            if (!started.ok()) {
+                serverPlayer.sendSystemMessage(Component.literal("§c[Donjon] " + started.message()));
+                return InteractionResult.CONSUME;
+            }
         }
         if (session.finished()) {
             serverPlayer.sendSystemMessage(Component.literal(session.victory() ? "§a[Donjon] Cette session est deja terminee par une victoire." : "§c[Donjon] Cette session est terminee apres elimination de l\u0027equipe."));

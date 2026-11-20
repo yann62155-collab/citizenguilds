@@ -25,7 +25,6 @@ public final class DungeonEvents {
     private static final String MOB_TAG = "citizenguilds_dungeon_mob";
     private static int tickCounter;
     private static int trapCounter;
-    private static int autoSpawnSeconds;
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(DungeonEvents.class);
     private DungeonEvents() {}
 
@@ -97,12 +96,26 @@ public final class DungeonEvents {
         MinecraftServer server = event.getServer();
         DungeonSessionData session = DungeonSessionData.get(server);
         if (!session.active()) {
-            tryAutoSpawnPortal(server);
+            DungeonService.tickAutoSpawn(server);
             return;
         }
-        if (session.finished() || session.site() == null || session.participantCount() == 0) return;
         ServerLevel level = server.getLevel(CitizenDimensions.DUNGEON);
-        if (level == null) return;
+        boolean atLeastOneInside = false;
+        if (level != null && !session.finished()) {
+            for (String uuid : session.livingParticipantIds()) {
+                ServerPlayer player = DungeonService.online(server, uuid);
+                if (player == null || player.serverLevel() != level) continue;
+                atLeastOneInside = true;
+                if (!DungeonArena.isInsideBounds(player.blockPosition())) {
+                    BlockPos entrance = DungeonArena.entrance();
+                    player.teleportTo(level, entrance.getX() + 0.5D, entrance.getY(), entrance.getZ() + 0.5D,
+                        player.getYRot(), player.getXRot());
+                    player.sendSystemMessage(Component.literal("§e[Donjon] Tu as ete replace dans les limites de l'instance."));
+                }
+            }
+        }
+        if (DungeonService.tickSession(server, session, atLeastOneInside)) return;
+        if (level == null || session.site() == null || session.participantCount() == 0) return;
         if (session.aliveCount() == 0) {
             session.removeActiveMobs(level);
             GuildSavedData.get(server).recordDungeonFailure(session.guildId());
@@ -110,19 +123,7 @@ public final class DungeonEvents {
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Donjon] Tous les aventuriers ont ete elimines."), false);
             return;
         }
-        boolean atLeastOneOnline = false;
-        for (String uuid : session.livingParticipantIds()) {
-            ServerPlayer player = server.getPlayerList().getPlayer(UUID.fromString(uuid));
-            if (player == null || player.serverLevel() != level) continue;
-            atLeastOneOnline = true;
-            if (!DungeonArena.isInsideBounds(player.blockPosition())) {
-                BlockPos entrance = DungeonArena.entrance();
-                player.teleportTo(level, entrance.getX() + 0.5D, entrance.getY(), entrance.getZ() + 0.5D,
-                    player.getYRot(), player.getXRot());
-                player.sendSystemMessage(Component.literal("§e[Donjon] Tu as ete replace dans les limites de l'instance."));
-            }
-        }
-        if (!atLeastOneOnline) return;
+        if (!atLeastOneInside) return;
 
         if (session.wavePending()) {
             if (session.wave() == 0) session.nextWave();
@@ -149,52 +150,6 @@ public final class DungeonEvents {
             return;
         }
         completeVictory(server, session);
-    }
-
-    private static void tryAutoSpawnPortal(MinecraftServer server) {
-        DungeonData data = DungeonData.get(server);
-        if (!data.autoSpawnEnabled()) { autoSpawnSeconds = 0; return; }
-        ServerLevel overworld = server.overworld();
-        BlockPos previous = data.lastSite();
-        if (previous != null) {
-            long spawnedAt = data.portalSpawnGameTime();
-            boolean expired = spawnedAt > 0L && overworld.getGameTime() - spawnedAt >= 20L * 60L * 60L * 2L;
-            if (expired) {
-                overworld.getChunkAt(previous);
-                if (overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                    DungeonPortalStructure.remove(overworld, previous);
-                data.clearLastSite();
-                server.getPlayerList().broadcastSystemMessage(
-                    Component.literal("§7[Donjon] Une porte ancienne s'est refermee apres deux heures d'attente."), false);
-                autoSpawnSeconds = 0;
-                return;
-            }
-            if (!overworld.hasChunkAt(previous)) { autoSpawnSeconds = 0; return; }
-            if (overworld.getBlockState(previous).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
-                autoSpawnSeconds = 0;
-                return;
-            }
-            data.clearLastSite();
-        }
-        int interval = data.spawnIntervalMinutes() * 60;
-        if (++autoSpawnSeconds < interval) return;
-
-        ServerPlayer referencePlayer = overworld.players().stream().findFirst().orElse(null);
-        if (referencePlayer == null) return;
-        BlockPos site = DungeonSiteFinder.find(overworld, referencePlayer, data.minX(), data.minY(), data.minZ());
-        if (site == null) {
-            autoSpawnSeconds = Math.max(0, interval - 300);
-            return;
-        }
-        BlockPos portalCenter = site.above(2);
-        if (!DungeonPortalStructure.canBuild(overworld, site)) return;
-        if (!DungeonPortalStructure.place(overworld, site)) return;
-        data.setLastSite(portalCenter);
-        data.setPortalSpawnGameTime(overworld.getGameTime());
-        autoSpawnSeconds = 0;
-        server.getPlayerList().broadcastSystemMessage(
-            Component.literal("§6[Donjon] §fUne porte ancienne vient d'apparaitre : X " + site.getX()
-                + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld). Le portail attend une guilde."), false);
     }
 
     private static void applyTrapPulse(MinecraftServer server, ServerLevel level, DungeonSessionData session) {
