@@ -181,6 +181,7 @@ public final class DungeonService {
     public static void tickAutoSpawn(MinecraftServer server) {
         DungeonData data = DungeonData.get(server);
         long time = now(server);
+        if (RiftDungeonController.isCharging()) return;
         if (data.hasPlacedPortal()) {
             if (time - data.portalSpawnGameTime() >= PORTAL_LIFETIME || time < data.portalSpawnGameTime()) {
                 removePortal(server);
