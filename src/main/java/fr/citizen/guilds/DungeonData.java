@@ -22,6 +22,8 @@ public final class DungeonData extends SavedData {
     private BlockPos riftPosition = null;
     private int riftLevel = 0;
     private long nextRiftCheckGameTime = 0L;
+    private int fractureDeformationPercent = 65;
+    private long fractureStartedAt = 0L;
 
     public static DungeonData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -42,6 +44,8 @@ public final class DungeonData extends SavedData {
         if (tag.getBoolean("hasRift")) data.riftPosition = new BlockPos(tag.getInt("riftX"), tag.getInt("riftY"), tag.getInt("riftZ"));
         data.riftLevel = Math.max(0, Math.min(6, tag.getInt("riftLevel")));
         data.nextRiftCheckGameTime = tag.getLong("nextRiftCheckGameTime");
+        data.fractureDeformationPercent = Math.max(0, Math.min(100, tag.contains("fractureDeformationPercent") ? tag.getInt("fractureDeformationPercent") : 65));
+        data.fractureStartedAt = tag.getLong("fractureStartedAt");
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
     }
@@ -60,6 +64,8 @@ public final class DungeonData extends SavedData {
         if (riftPosition != null) { tag.putInt("riftX", riftPosition.getX()); tag.putInt("riftY", riftPosition.getY()); tag.putInt("riftZ", riftPosition.getZ()); }
         tag.putInt("riftLevel", riftLevel);
         tag.putLong("nextRiftCheckGameTime", nextRiftCheckGameTime);
+        tag.putInt("fractureDeformationPercent", fractureDeformationPercent);
+        tag.putLong("fractureStartedAt", fractureStartedAt);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
             tag.putInt("siteX", lastSite.getX());
@@ -80,6 +86,10 @@ public final class DungeonData extends SavedData {
     public BlockPos riftPosition() { return riftPosition; }
     public int riftLevel() { return riftLevel; }
     public long nextRiftCheckGameTime() { return nextRiftCheckGameTime; }
+    public int fractureDeformationPercent() { return fractureDeformationPercent; }
+    public long fractureStartedAt() { return fractureStartedAt; }
+    public void setFractureDeformationPercent(int percent) { fractureDeformationPercent = Math.max(0, Math.min(100, percent)); setDirty(); }
+    public void setFractureStartedAt(long time) { fractureStartedAt = time; setDirty(); }
     public void setRiftPosition(BlockPos pos) { riftPosition = pos == null ? null : pos.immutable(); riftLevel = 0; nextRiftCheckGameTime = 0L; setDirty(); }
     public void setRiftLevel(int level) { riftLevel = Math.max(0, Math.min(6, level)); setDirty(); }
     public void setNextRiftCheckGameTime(long time) { nextRiftCheckGameTime = time; setDirty(); }
