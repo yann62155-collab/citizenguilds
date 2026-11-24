@@ -46,6 +46,11 @@ public final class RiftDungeonController {
             if (mechanism instanceof RiftMechanismEntity rift) rift.setCharging(false, 1.0F);
         }
         if (!result.ok()) {
+            if (mechanismId != null) {
+                var failedMechanism = overworld.getEntity(mechanismId);
+                if (failedMechanism != null) failedMechanism.discard();
+            }
+            mechanismId = null;
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Faille] §fLa formation de la porte a echoue : " + result.message()), false);
             return;
         }
