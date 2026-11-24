@@ -29,9 +29,10 @@ public final class DungeonGateVisualRenderer extends EntityRenderer<DungeonGateV
 
         // Gothic frame in a vertical plane, built from layered bevelled outlines.
         gothicFrame(pose, out);
-        // Circular aperture: three rotating rings and a multi-turn spiral.
+        depthAndReliefs(pose, out, time);
+        // Circular aperture: layered rotating rings, inner vortex and energy cracks.
         aperture(pose, out, time);
-        // Floating crystal: elongated faceted core, side shards and gold armillary bands.
+        // Floating crystal: faceted core, side shards, chains and gold armillary bands.
         crystal(pose, out, time);
         pose.popPose();
         super.render(entity, yaw, partialTick, pose, buffers, packedLight);
@@ -76,6 +77,78 @@ public final class DungeonGateVisualRenderer extends EntityRenderer<DungeonGateV
                 line(out, pose.last(), x, y - .18F, z - .07F, x - .12F, y, z - .07F, .95F, .28F, .78F);
                 line(out, pose.last(), x - .12F, y, z - .07F, x, y + .18F, z - .07F, .95F, .28F, .78F);
             }
+        }
+    }
+
+    /**
+     * Adds real depth to the silhouette: recessed inner arch, projecting stone
+     * ribs, stepped plinth, corner buttresses and suspended chain details.
+     */
+    private static void depthAndReliefs(PoseStack pose, VertexConsumer out, float time) {
+        // Front and rear arch contours create a thick portal housing rather than a flat outline.
+        for (float z : new float[]{-.24F, .28F}) {
+            for (int i = 0; i < 64; i++) {
+                float a0 = (float)Math.PI * i / 64.0F;
+                float a1 = (float)Math.PI * (i + 1) / 64.0F;
+                float x0 = Mth.cos(a0) * 1.58F, y0 = .08F + Mth.sin(a0) * 1.58F;
+                float x1 = Mth.cos(a1) * 1.58F, y1 = .08F + Mth.sin(a1) * 1.58F;
+                line(out, pose.last(), x0, y0, z, x1, y1, z, .24F, .17F, .29F);
+            }
+        }
+        // Recessed vertical ribs and projecting buttresses on both sides.
+        for (float side : new float[]{-1.0F, 1.0F}) {
+            float x = side * 1.78F;
+            for (float z : new float[]{-.34F, .34F}) {
+                line(out, pose.last(), x, -1.82F, z, x, 1.22F, z, .19F, .14F, .22F);
+                line(out, pose.last(), x - side * .18F, -1.72F, z, x - side * .18F, 1.12F, z,
+                    .42F, .29F, .43F);
+            }
+            // Three projecting stone ribs, each with a gold pin at the tip.
+            for (float y : new float[]{-.95F, -.05F, .85F}) {
+                line(out, pose.last(), side * 1.55F, y, -.42F, side * 2.02F, y, -.42F, .31F, .22F, .35F);
+                line(out, pose.last(), side * 2.02F, y, -.42F, side * 2.02F, y + .16F, -.42F,
+                    .95F, .62F, .22F);
+            }
+            // Buttress tips and small side spires.
+            line(out, pose.last(), side * 1.78F, 1.0F, 0, side * 2.12F, 1.48F, 0, .38F, .25F, .42F);
+            line(out, pose.last(), side * 2.12F, 1.48F, 0, side * 1.94F, 1.12F, 0, .72F, .48F, .18F);
+            line(out, pose.last(), side * 2.12F, 1.48F, 0, side * 2.30F, 1.12F, 0, .72F, .48F, .18F);
+        }
+        // Stepped plinth, front bevels and four corner studs.
+        for (float z : new float[]{-.46F, .38F}) {
+            line(out, pose.last(), -2.08F, -1.98F, z, 2.08F, -1.98F, z, .24F, .18F, .27F);
+            line(out, pose.last(), -1.92F, -1.78F, z, 1.92F, -1.78F, z, .55F, .38F, .18F);
+        }
+        for (float x : new float[]{-1.92F, 1.92F}) {
+            for (float z : new float[]{-.46F, .38F}) {
+                line(out, pose.last(), x - .10F, -1.88F, z, x, -1.76F, z, .95F, .68F, .24F);
+                line(out, pose.last(), x, -1.76F, z, x + .10F, -1.88F, z, .95F, .68F, .24F);
+            }
+        }
+        // Fine chains suspended from the crown toward the crystal.
+        for (int side = -1; side <= 1; side += 2) {
+            float lastX = side * 1.18F, lastY = 2.02F;
+            for (int i = 1; i <= 12; i++) {
+                float t = i / 12.0F;
+                float x = Mth.lerp(t, side * 1.18F, side * .62F);
+                float y = Mth.lerp(t, 2.02F, 3.02F) + Mth.sin(time * 2.0F + i * .8F) * .025F;
+                line(out, pose.last(), lastX, lastY, -.08F, x, y, -.08F, .78F, .48F, .16F);
+                lastX = x; lastY = y;
+            }
+        }
+        // Tiny floating runic motes around the aperture.
+        for (int i = 0; i < 8; i++) {
+            float a = time * .24F + i * (float)Math.PI / 4.0F;
+            float x = Mth.cos(a) * 2.28F, y = Mth.sin(a) * 1.82F - .1F;
+            float pulse = .65F + .35F * Mth.sin(time * 3.0F + i);
+            line(out, pose.last(), x - .07F, y, -.52F, x, y + .10F, -.52F,
+                .55F * pulse, .28F, 1.0F);
+            line(out, pose.last(), x, y + .10F, -.52F, x + .07F, y, -.52F,
+                .55F * pulse, .28F, 1.0F);
+            line(out, pose.last(), x + .07F, y, -.52F, x, y - .10F, -.52F,
+                .55F * pulse, .28F, 1.0F);
+            line(out, pose.last(), x, y - .10F, -.52F, x - .07F, y, -.52F,
+                .55F * pulse, .28F, 1.0F);
         }
     }
 
@@ -137,9 +210,27 @@ public final class DungeonGateVisualRenderer extends EntityRenderer<DungeonGateV
             line(out, pose.last(), side * .78F, .62F, 0, side * .72F, -.12F, 0, .65F, .30F, .96F);
             line(out, pose.last(), side * .72F, -.12F, 0, side * .24F, .25F, 0, .75F, .38F, 1.0F);
         }
+        // Crown cap and lower point, plus internal facet cuts for a more crystalline silhouette.
+        for (int i = 0; i < 8; i++) {
+            float a = i * (float)Math.PI / 4.0F;
+            float x = Mth.cos(a) * .43F, z = Mth.sin(a) * .43F;
+            line(out, pose.last(), x, .0F, z, x * .42F, .58F, z * .42F, .92F, .72F, 1.0F);
+            line(out, pose.last(), x, .0F, z, x * .42F, -.58F, z * .42F, .52F, .28F, .92F);
+        }
         // Two tilted gold orbital rings around the floating crystal.
         goldRing(pose, out, .86F, time * 1.15F, .92F, 0.0F);
         goldRing(pose, out, .98F, -time * .82F, 0.0F, .92F);
+        // Fine outer halo and four floating shard satellites.
+        goldRing(pose, out, 1.16F, time * .28F, .18F, .18F);
+        for (int i = 0; i < 4; i++) {
+            float a = time * .42F + i * (float)Math.PI / 2.0F;
+            float x = Mth.cos(a) * 1.28F, z = Mth.sin(a) * 1.28F;
+            float y = Mth.sin(time * 1.3F + i) * .12F;
+            line(out, pose.last(), x, y + .22F, z, x + .12F, y, z, .72F, .34F, 1.0F);
+            line(out, pose.last(), x + .12F, y, z, x, y - .22F, z, .92F, .58F, 1.0F);
+            line(out, pose.last(), x, y - .22F, z, x - .12F, y, z, .62F, .28F, .92F);
+            line(out, pose.last(), x - .12F, y, z, x, y + .22F, z, .92F, .58F, 1.0F);
+        }
         pose.popPose();
     }
 
