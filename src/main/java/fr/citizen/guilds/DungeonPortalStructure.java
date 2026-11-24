@@ -59,8 +59,8 @@ public final class DungeonPortalStructure {
         blocks.put(ground.offset(1, 9, 0), Blocks.AMETHYST_BLOCK);
 
         // Two gold collars around the crystal, with lateral gold pins.
-        for (int x = -1; x <= 1; x++) {
-            blocks.put(ground.offset(x, 8, 0), x == 0 ? Blocks.GOLD_BLOCK : Blocks.GOLD_BLOCK);
+        for (int x : new int[] {-1, 1}) {
+            blocks.put(ground.offset(x, 8, 0), Blocks.GOLD_BLOCK);
             blocks.put(ground.offset(x, 10, 0), Blocks.GOLD_BLOCK);
         }
         blocks.put(ground.offset(-2, 8, 0), Blocks.GOLD_BLOCK);
