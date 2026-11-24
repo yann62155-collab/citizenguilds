@@ -40,8 +40,11 @@ public final class RiftDungeonController {
         if (overworld.getGameTime() - chargeStartedAt < CHARGE_TICKS) return;
         BlockPos site = pendingSite;
         pendingSite = null;
-        mechanismId = null;
         DungeonService.Result result = DungeonService.placePortal(server, site);
+        if (mechanismId != null) {
+            var mechanism = overworld.getEntity(mechanismId);
+            if (mechanism instanceof RiftMechanismEntity rift) rift.setCharging(false, 1.0F);
+        }
         if (!result.ok()) {
             server.getPlayerList().broadcastSystemMessage(Component.literal("§c[Faille] §fLa formation de la porte a echoue : " + result.message()), false);
             return;
