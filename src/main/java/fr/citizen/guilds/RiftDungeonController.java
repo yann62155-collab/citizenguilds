@@ -172,11 +172,14 @@ public final class RiftDungeonController {
     public static void clear(MinecraftServer server) {
         if (mechanismId != null) {
             var entity = server.overworld().getEntity(mechanismId);
-            if (entity != null) entity.discard();
+            if (entity instanceof RiftMechanismEntity rift) rift.setIdleSpeed(1.0F);
         }
         pendingSite = null;
         mechanismId = null;
         chargeStartedAt = 0L;
+        DungeonData data = DungeonData.get(server);
+        data.setRiftLevel(0);
+        data.setNextRiftCheckGameTime(server.overworld().getGameTime() + MINUTE_TICKS);
     }
 
     public static boolean isCharging() { return pendingSite != null; }
