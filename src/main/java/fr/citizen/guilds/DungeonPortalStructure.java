@@ -3,6 +3,7 @@ package fr.citizen.guilds;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -99,6 +100,12 @@ public final class DungeonPortalStructure {
         for (Map.Entry<BlockPos, Block> entry : layout(ground, difficulty).entrySet()) {
             level.setBlock(entry.getKey(), entry.getValue().defaultBlockState(), 3);
         }
+        // The custom client renderer supplies the actual 3D arch, animated circular vortex and floating crystal.
+        DungeonGateVisualEntity visual = CitizenGuildEntities.DUNGEON_GATE_VISUAL.get().create(level);
+        if (visual != null) {
+            visual.setPos(ground.getX() + 0.5D, ground.getY() + 2.0D, ground.getZ() + 0.5D);
+            level.addFreshEntity(visual);
+        }
         return true;
     }
 
@@ -108,6 +115,10 @@ public final class DungeonPortalStructure {
             BlockPos pos = entry.getKey();
             BlockState state = level.getBlockState(pos);
             if (state.is(entry.getValue())) level.removeBlock(pos, false);
+        }
+        for (DungeonGateVisualEntity visual : level.getEntitiesOfClass(DungeonGateVisualEntity.class,
+                new AABB(ground).inflate(8.0D))) {
+            visual.discard();
         }
     }
 }
