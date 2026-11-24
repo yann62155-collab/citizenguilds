@@ -258,12 +258,10 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         data.setRiftLevel(0);
         data.setNextRiftCheckGameTime(0L);
-        if (!data.fractureActive()) {
-            data.setFractureActive(true, overworld.getGameTime());
-            RiftSkyStatePayload.broadcast(true);
-            thunderFracture(server);
-        }
-        server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa fracture dechire le ciel dans un grondement de tonnerre ! Un donjon vient d'apparaitre."), false);
+        // Dungeon creation no longer opens the global sky fracture.
+        // The sky effect is controlled only by /guild rift open and /guild rift close.
+        server.getPlayerList().broadcastSystemMessage(Component.literal(
+            "§6[Rift] §fLe donjon est apparu. La faille celeste reste independante."), false);
     }
 
     public static void clear(MinecraftServer server) {
