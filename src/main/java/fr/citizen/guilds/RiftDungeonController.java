@@ -2,12 +2,16 @@ package fr.citizen.guilds;
 
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.AABB;
 
-/** Controls the permanent hub gyroscope and its minute-by-minute dungeon chance. */
+/** Controls the permanent hub gyroscope and the sky fracture announcing dungeon openings. */
 public final class RiftDungeonController {
     private static final long CHARGE_TICKS = 20L * 20L;
     private static final long MINUTE_TICKS = 20L * 60L;
@@ -72,6 +76,34 @@ public final class RiftDungeonController {
             + " | Niveau " + level + "/6 | Chance actuelle " + chance + "% | Prochain controle dans ~" + minutes + " min.";
     }
 
+    /** Draws a jagged purple tear above the active dungeon site while its gate remains open. */
+    private static void emitSkyFracture(ServerLevel level, BlockPos gate) {
+        int skyY = Math.min(level.getMaxBuildHeight() - 12, gate.getY() + 68);
+        double centerX = gate.getX() + 0.5D;
+        double centerZ = gate.getZ() + 0.5D;
+        double[][] crack = {
+            {-8.0D, 12.0D}, {-4.0D, 8.0D}, {1.0D, 4.0D},
+            {-2.0D, 0.0D}, {3.0D, -4.0D}, {-1.0D, -8.0D}, {4.0D, -12.0D}
+        };
+        for (int i = 0; i < crack.length; i++) {
+            double x = centerX + crack[i][0];
+            double y = skyY + crack[i][1];
+            level.sendParticles(ParticleTypes.PORTAL, x, y, centerZ, 5, 0.18D, 0.45D, 0.18D, 0.02D);
+            if (i % 2 == 0) {
+                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, centerZ, 2, 0.25D, 0.35D, 0.25D, 0.01D);
+            }
+        }
+    }
+
+    private static void thunderFracture(MinecraftServer server, BlockPos gate) {
+        ServerLevel level = server.overworld();
+        emitSkyFracture(level, gate);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 8.0F, 0.65F);
+            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 5.0F, 0.8F);
+        }
+    }
+
     /** Uses CitizenGuilds' existing next-spawn timer; the gyroscope accelerates as it approaches zero. */
     public static void tickProgression(MinecraftServer server) {
         DungeonData data = DungeonData.get(server);
@@ -87,15 +119,18 @@ public final class RiftDungeonController {
                 overworld.addFreshEntity(mechanism);
             }
         }
-        if (!data.autoSpawnEnabled() || DungeonService.isPortalPresent(server)
-            || DungeonSessionData.get(server).active() || isCharging()) {
+        if (DungeonService.isPortalPresent(server)) {
+            if (overworld.getGameTime() % 5L == 0L) emitSkyFracture(overworld, data.lastSite());
+            if (mechanism != null) mechanism.setIdleSpeed(1.0F);
+            return;
+        }
+        if (!data.autoSpawnEnabled() || DungeonSessionData.get(server).active() || isCharging()) {
             if (mechanism != null) mechanism.setIdleSpeed(1.0F);
             return;
         }
 
         long now = overworld.getGameTime();
         long next = data.nextSpawnGameTime();
-        // Use the configured interval, just like the normal automatic dungeon scheduler.
         if (next <= 0L) {
             next = now + data.spawnIntervalMinutes() * MINUTE_TICKS;
             data.setNextSpawnGameTime(next);
@@ -105,12 +140,10 @@ public final class RiftDungeonController {
         float progress = 1.0F - Math.min(1.0F, (float) remaining / (float) total);
         float speed = 1.0F + progress * 7.0F;
         if (mechanism != null) mechanism.setIdleSpeed(speed);
-        int percent = Math.min(100, Math.round(progress * 100.0F));
         int level = Math.min(6, Math.max(0, Math.round(progress * 6.0F)));
         if (data.riftLevel() != level) data.setRiftLevel(level);
 
-        if (remaining > 0L) return;
-        if (server.getPlayerList().getPlayerCount() == 0) return;
+        if (remaining > 0L || server.getPlayerList().getPlayerCount() == 0) return;
         DungeonSiteFinder.Search search = DungeonSiteFinder.findAuto(overworld, data);
         data.setLastSearchNote(search.note());
         if (search.site() == null) {
@@ -171,7 +204,8 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         data.setRiftLevel(0);
         data.setNextRiftCheckGameTime(0L);
-        server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa faille s'ouvre ! Un donjon vient d'apparaitre."), false);
+        thunderFracture(server, site.above(2));
+        server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa fracture dechire le ciel dans un grondement de tonnerre ! Un donjon vient d'apparaitre."), false);
     }
 
     public static void clear(MinecraftServer server) {
