@@ -25,5 +25,13 @@ public final class CitizenGuildEntities {
             .updateInterval(1)
             .build("citizenguilds:rift_mechanism"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<DungeonGateVisualEntity>> DUNGEON_GATE_VISUAL =
+        ENTITY_TYPES.register("dungeon_gate_visual", () -> EntityType.Builder
+            .of(DungeonGateVisualEntity::new, MobCategory.MISC)
+            .sized(1.0F, 1.0F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build("citizenguilds:dungeon_gate_visual"));
+
     private CitizenGuildEntities() {}
 }
