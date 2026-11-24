@@ -310,8 +310,10 @@ public final class DungeonEvents {
             player.sendSystemMessage(Component.literal("§a[Donjon] Victoire ! Recompense : " + jade + " minerai(s) de Pierre de Jade."));
             rewarded++;
         }
+        String[] bossNames = {"Chevalier noir", "Chevalier rouge", "Chevalier violet", "Moine noir"};
+        String defeatedBoss = bossNames[DungeonData.get(server).riftDifficulty()];
         server.getPlayerList().broadcastSystemMessage(
-            Component.literal("§6[Donjon] §aLa guilde " + session.guildName()
-                + " a vaincu le Gardien des profondeurs ! Recompense : " + jadeReward + " Jade par survivant ; " + rewarded + " connecte(s)."), false);
+            Component.literal("§6[Faille] §aLa guilde " + session.guildName()
+                + " a vaincu " + defeatedBoss + " ! Recompense : " + jadeReward + " Jade par survivant ; " + rewarded + " connecte(s)."), false);
     }
 }
