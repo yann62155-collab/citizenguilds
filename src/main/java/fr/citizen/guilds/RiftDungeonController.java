@@ -39,7 +39,8 @@ public final class RiftDungeonController {
         mechanism.setIdleSpeed(1.0F);
         if (!overworld.addFreshEntity(mechanism)) return DungeonService.Result.fail("Impossible d'ajouter le Rift au hub.");
         data.setRiftPosition(pos);
-        data.setNextRiftCheckGameTime(overworld.getGameTime() + MINUTE_TICKS);
+        if (data.nextSpawnGameTime() <= 0L) data.setNextSpawnGameTime(overworld.getGameTime() + data.spawnIntervalMinutes() * MINUTE_TICKS);
+        data.setNextRiftCheckGameTime(0L);
         return DungeonService.Result.ok("Rift installe en X " + pos.getX() + ", Y " + pos.getY() + ", Z " + pos.getZ() + ".");
     }
 
@@ -94,9 +95,9 @@ public final class RiftDungeonController {
 
         long now = overworld.getGameTime();
         long next = data.nextSpawnGameTime();
-        // Match the existing automatic system's initial two-minute delay.
+        // Use the configured interval, just like the normal automatic dungeon scheduler.
         if (next <= 0L) {
-            next = now + 40L * 20L;
+            next = now + data.spawnIntervalMinutes() * MINUTE_TICKS;
             data.setNextSpawnGameTime(next);
         }
         long total = Math.max(1L, data.spawnIntervalMinutes() * MINUTE_TICKS);
