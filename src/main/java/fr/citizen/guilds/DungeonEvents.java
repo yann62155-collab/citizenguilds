@@ -187,7 +187,7 @@ public final class DungeonEvents {
             EntityType<? extends Mob>[] selected = switch (difficulty) {
                 case 0 -> new EntityType[]{EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER};
                 case 1 -> new EntityType[]{EntityType.PILLAGER, EntityType.VINDICATOR, EntityType.STRAY, EntityType.CAVE_SPIDER};
-                case 2 -> new EntityType<?>[]{EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH};
+                case 2 -> new EntityType[]{EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH};
                 default -> new EntityType<?>[]{EntityType.EVOKER, EntityType.WITCH, EntityType.VINDICATOR, EntityType.VINDICATOR};
             };
             for (int i = 0; i < selected.length; i++) addMob(level, site, selected[i], offsets[i], false, ids);
