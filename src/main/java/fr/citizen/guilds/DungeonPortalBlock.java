@@ -19,14 +19,26 @@ public final class DungeonPortalBlock extends Block {
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (random.nextInt(3) == 0) {
-            level.addParticle(ParticleTypes.PORTAL,
-                pos.getX() + random.nextDouble(),
-                pos.getY() + 0.5D + (random.nextDouble() - 0.5D) * 0.5D,
-                pos.getZ() + random.nextDouble(),
-                (random.nextDouble() - 0.5D) * 0.4D,
-                (random.nextDouble() - 0.5D) * 0.4D,
-                (random.nextDouble() - 0.5D) * 0.4D);
+        // A coherent spiral is emitted across the 3x3 gate aperture.
+        // The particles are positioned in the portal plane, not scattered around the frame.
+        double time = level.getGameTime() * 0.105D;
+        double cx = pos.getX() + 0.5D;
+        double cy = pos.getY() + 0.5D;
+        double cz = pos.getZ() + 0.505D;
+        for (int i = 0; i < 3; i++) {
+            double angle = time + i * (Math.PI * 2.0D / 3.0D)
+                + (pos.getX() * 0.31D + pos.getY() * 0.17D);
+            double radius = 0.12D + 0.34D * (0.5D + 0.5D * Math.sin(time * 0.7D + i));
+            double px = cx + Math.cos(angle) * radius;
+            double py = cy + Math.sin(angle) * radius;
+            level.addParticle(ParticleTypes.PORTAL, px, py, cz,
+                -Math.sin(angle) * 0.025D, Math.cos(angle) * 0.025D, -0.012D);
+        }
+        if (random.nextInt(4) == 0) {
+            level.addParticle(ParticleTypes.REVERSE_PORTAL,
+                cx + (random.nextDouble() - 0.5D) * 0.55D,
+                cy + (random.nextDouble() - 0.5D) * 0.55D,
+                cz, 0.0D, 0.0D, -0.015D);
         }
     }
 
