@@ -180,6 +180,10 @@ public final class DungeonService {
 
     public static void tickAutoSpawn(MinecraftServer server) {
         DungeonData data = DungeonData.get(server);
+        if (data.riftPosition() != null) {
+            RiftDungeonController.tickProgression(server);
+            return;
+        }
         long time = now(server);
         if (RiftDungeonController.isCharging()) return;
         if (data.hasPlacedPortal()) {
