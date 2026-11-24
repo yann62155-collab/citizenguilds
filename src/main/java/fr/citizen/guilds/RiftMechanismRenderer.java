@@ -36,9 +36,9 @@ public final class RiftMechanismRenderer extends EntityRenderer<RiftMechanismEnt
         VertexConsumer out = buffers.getBuffer(RenderType.lines());
 
         // Three differently tilted armillary hoops, each built as a raised metal band.
-        hoop(stack, out, 1.34F, t, 0.26F, 0.0F, 0.0F);
-        hoop(stack, out, 1.13F, -t * 0.73F, 1.04F, 0.0F, 0.0F);
-        hoop(stack, out, 0.91F, t * 1.31F, 0.0F, 0.88F, 0.0F);
+        hoop(stack, out, 1.34F, t, 0.26F, 0.0F);
+        hoop(stack, out, 1.13F, -t * 0.73F, 1.04F, 0.0F);
+        hoop(stack, out, 0.91F, t * 1.31F, 0.0F, 0.88F);
 
         // Fine orbital meridians and radial braces.
         stack.pushPose();
