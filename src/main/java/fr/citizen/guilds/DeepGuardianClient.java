@@ -17,5 +17,6 @@ public final class DeepGuardianClient {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(CitizenGuildEntities.DEEP_GUARDIAN.get(), DeepGuardianRenderer::new);
+        event.registerEntityRenderer(CitizenGuildEntities.RIFT_MECHANISM.get(), RiftMechanismRenderer::new);
     }
 }
