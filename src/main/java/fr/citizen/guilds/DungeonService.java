@@ -75,6 +75,7 @@ public final class DungeonService {
             if (overworld.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
                 DungeonPortalStructure.remove(overworld, site);
         }
+        RiftDungeonController.clear(server);
         data.clearLastSite();
         scheduleNext(server);
     }
@@ -93,7 +94,7 @@ public final class DungeonService {
         DungeonSiteFinder.Search search = DungeonSiteFinder.findAuto(server.overworld(), data);
         data.setLastSearchNote(search.note());
         if (search.site() == null) return Result.fail(search.note());
-        return placePortal(server, search.site());
+        return RiftDungeonController.begin(server, search.site());
     }
 
     // ------------------------------------------------------------------ session
@@ -203,7 +204,7 @@ public final class DungeonService {
             data.setNextSpawnGameTime(time + RETRY_DELAY);
             return;
         }
-        if (!placePortal(server, search.site()).ok()) data.setNextSpawnGameTime(time + RETRY_DELAY);
+        if (!RiftDungeonController.begin(server, search.site()).ok()) data.setNextSpawnGameTime(time + RETRY_DELAY);
     }
 
     // ------------------------------------------------------------------ menu data
