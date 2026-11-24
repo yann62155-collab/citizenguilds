@@ -76,26 +76,37 @@ public final class RiftDungeonController {
             + " | Niveau " + level + "/6 | Chance actuelle " + chance + "% | Prochain controle dans ~" + minutes + " min.";
     }
 
-    /** Draws a jagged purple tear above the active dungeon site while its gate remains open. */
-    private static void emitSkyFracture(ServerLevel level, BlockPos gate) {
-        int skyY = Math.min(level.getMaxBuildHeight() - 12, gate.getY() + 68);
-        double centerX = gate.getX() + 0.5D;
-        double centerZ = gate.getZ() + 0.5D;
-        double[][] crack = {
-            {-8.0D, 12.0D}, {-4.0D, 8.0D}, {1.0D, 4.0D},
-            {-2.0D, 0.0D}, {3.0D, -4.0D}, {-1.0D, -8.0D}, {4.0D, -12.0D}
-        };
-        // Send the particles directly to every player in the Overworld, even when far away.
-        // The longDistance flag prevents the normal 32-block particle visibility limit.
+    /** Draws a world-wide sky tear in every player's own view, so distance on the map never hides it. */
+    private static void emitSkyFracture(ServerLevel level, DungeonData data) {
+        long elapsed = Math.max(0L, level.getGameTime() - data.fractureStartedAt());
+        float growth = Math.min(1.0F, elapsed / 6000.0F); // five minutes to reach the staff target
+        double deformation = data.fractureDeformationPercent() / 100.0D * growth;
+        if (deformation <= 0.0D) return;
+
         for (ServerPlayer player : level.players()) {
-            for (int i = 0; i < crack.length; i++) {
-                double x = centerX + crack[i][0];
-                double y = skyY + crack[i][1];
-                level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, centerZ,
-                    5, 0.18D, 0.45D, 0.18D, 0.02D);
+            double yaw = Math.toRadians(player.getYRot());
+            double forwardX = -Math.sin(yaw);
+            double forwardZ = Math.cos(yaw);
+            double sideX = -forwardZ;
+            double sideZ = forwardX;
+            double centerX = player.getX() + forwardX * 105.0D;
+            double centerZ = player.getZ() + forwardZ * 105.0D;
+            double skyY = Math.min(level.getMaxBuildHeight() - 18.0D, Math.max(player.getY() + 52.0D, 150.0D));
+            int segments = 32;
+            for (int i = 0; i <= segments; i++) {
+                double t = (i / (double) segments) * 2.0D - 1.0D;
+                double wave = Math.sin(t * 9.0D + elapsed * 0.035D) * 7.0D
+                    + Math.sin(t * 19.0D - elapsed * 0.021D) * 3.5D;
+                double jagged = Math.sin(i * 12.9898D + 78.233D) * 43758.5453D;
+                jagged = (jagged - Math.floor(jagged)) * 2.0D - 1.0D;
+                double y = skyY + (wave + jagged * 12.0D) * deformation;
+                double x = centerX + sideX * t * 125.0D;
+                double z = centerZ + sideZ * t * 125.0D;
+                level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, z,
+                    3, 0.5D + deformation * 0.8D, 0.7D + deformation * 0.8D, 0.5D + deformation * 0.8D, 0.015D);
                 if (i % 2 == 0) {
-                    level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true, x, y, centerZ,
-                        2, 0.25D, 0.35D, 0.25D, 0.01D);
+                    level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true, x, y, z,
+                        2, 0.35D + deformation * 0.5D, 0.45D + deformation * 0.5D, 0.35D + deformation * 0.5D, 0.01D);
                 }
             }
         }
@@ -103,7 +114,7 @@ public final class RiftDungeonController {
 
     private static void thunderFracture(MinecraftServer server, BlockPos gate) {
         ServerLevel level = server.overworld();
-        emitSkyFracture(level, gate);
+        emitSkyFracture(level, DungeonData.get(server));
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 8.0F, 0.65F);
             player.playNotifySound(SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 5.0F, 0.8F);
@@ -126,7 +137,7 @@ public final class RiftDungeonController {
             }
         }
         if (DungeonService.isPortalPresent(server)) {
-            if (overworld.getGameTime() % 5L == 0L) emitSkyFracture(overworld, data.lastSite());
+            if (overworld.getGameTime() % 5L == 0L) emitSkyFracture(overworld, data);
             if (mechanism != null) mechanism.setIdleSpeed(1.0F);
             return;
         }
@@ -193,7 +204,11 @@ public final class RiftDungeonController {
     }
 
     public static void tick(MinecraftServer server) {
-        if (pendingSite == null) return;
+        if (pendingSite == null) {
+            if (DungeonService.isPortalPresent(server) && server.overworld().getGameTime() % 5L == 0L)
+                emitSkyFracture(server.overworld(), DungeonData.get(server));
+            return;
+        }
         ServerLevel overworld = server.overworld();
         if (overworld.getGameTime() - chargeStartedAt < CHARGE_TICKS) return;
         BlockPos site = pendingSite;
@@ -210,6 +225,7 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         data.setRiftLevel(0);
         data.setNextRiftCheckGameTime(0L);
+        data.setFractureStartedAt(overworld.getGameTime());
         thunderFracture(server, site.above(2));
         server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa fracture dechire le ciel dans un grondement de tonnerre ! Un donjon vient d'apparaitre."), false);
     }
