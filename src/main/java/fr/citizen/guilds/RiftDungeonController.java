@@ -81,55 +81,78 @@ public final class RiftDungeonController {
      * The effect is deliberately camera-relative: players anywhere in the Overworld
      * see the same sky event, without requiring the distant portal chunk to be loaded.
      */
+    /**
+     * Camera-relative global sky effect. Every Overworld player receives the same
+     * tear in front of their own view, so it remains visible anywhere on the map
+     * without loading or tracking a single distant chunk.
+     */
     private static void emitSkyFracture(ServerLevel level, DungeonData data) {
+        if (!data.fractureActive()) return;
         long elapsed = Math.max(0L, level.getGameTime() - data.fractureStartedAt());
-        float growth = Math.min(1.0F, elapsed / 6000.0F); // five minutes to reach the staff target
-        double deformation = data.fractureDeformationPercent() / 100.0D * growth;
-        if (deformation <= 0.0D) return;
+        double growth = Math.min(1.0D, elapsed / 60.0D);
+        double intensity = data.fractureDeformationPercent() / 100.0D * growth;
+        if (intensity <= 0.0D) return;
 
         for (ServerPlayer player : level.players()) {
             double yaw = Math.toRadians(player.getYRot());
-            double forwardX = -Math.sin(yaw);
-            double forwardZ = Math.cos(yaw);
-            double sideX = -forwardZ;
-            double sideZ = forwardX;
-
-            // Keep the tear close enough to render reliably, but high and wide enough
-            // to dominate the skyline from every player's current position.
-            double centerX = player.getX() + forwardX * 16.0D;
-            double centerZ = player.getZ() + forwardZ * 16.0D;
-            double skyY = Math.min(level.getMaxBuildHeight() - 18.0D,
-                Math.max(player.getY() + 12.0D, 100.0D));
-
-            int segments = 28;
+            double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+            double sx = -fz, sz = fx;
+            double cx = player.getX() + fx * 18.0D;
+            double cz = player.getZ() + fz * 18.0D;
+            double cy = Math.min(level.getMaxBuildHeight() - 12.0D,
+                Math.max(player.getY() + 17.0D, 105.0D));
+            int segments = 36;
             for (int i = 0; i <= segments; i++) {
-                double t = (i / (double) segments) * 2.0D - 1.0D;
-                double wave = Math.sin(t * 9.0D + elapsed * 0.035D) * 9.0D
-                    + Math.sin(t * 19.0D - elapsed * 0.021D) * 4.5D;
-                double jagged = Math.sin(i * 12.9898D + 78.233D) * 43758.5453D;
-                jagged = (jagged - Math.floor(jagged)) * 2.0D - 1.0D;
-                double y = skyY + (wave + jagged * 14.0D) * deformation;
-                double x = centerX + sideX * t * 28.0D;
-                double z = centerZ + sideZ * t * 28.0D;
-
-                // A dense violet core with bright electrical fractures along its edge.
+                double t = i / (double) segments * 2.0D - 1.0D;
+                double wave = Math.sin(t * 8.0D + elapsed * 0.075D) * 3.8D
+                    + Math.sin(t * 17.0D - elapsed * 0.047D) * 1.7D;
+                double jag = Math.sin(i * 91.7D + elapsed * 0.11D) * 1.3D;
+                double x = cx + sx * t * 24.0D;
+                double z = cz + sz * t * 24.0D;
+                double y = cy + (wave + jag) * intensity;
+                // Violet rift body and a bright electric blue-violet rim.
                 level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, z,
-                    4, 0.8D + deformation, 0.9D + deformation, 0.8D + deformation, 0.012D);
+                    3, 0.22D, 0.28D, 0.22D, 0.006D);
                 if (i % 2 == 0) {
                     level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true, x, y, z,
-                        2, 0.45D + deformation * 0.5D, 0.55D + deformation * 0.5D,
-                        0.45D + deformation * 0.5D, 0.008D);
+                        2, 0.16D, 0.22D, 0.16D, 0.018D);
+                }
+                // Short lightning branches that jump away from the main tear.
+                if (i % 6 == 0) {
+                    double branch = (i % 12 == 0 ? 1.0D : -1.0D) * (2.0D + intensity * 4.0D);
+                    level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true,
+                        x + sx * branch, y + branch * 0.55D, z + sz * branch,
+                        5, 0.35D, 0.45D, 0.35D, 0.025D);
                 }
             }
         }
     }
 
-    private static void thunderFracture(MinecraftServer server, BlockPos gate) {
-        ServerLevel level = server.overworld();
-        emitSkyFracture(level, DungeonData.get(server));
+    /** Opens a persistent server-wide sky fracture without spawning or changing a dungeon. */
+    public static DungeonService.Result openFracture(MinecraftServer server) {
+        DungeonData data = DungeonData.get(server);
+        if (data.fractureActive()) return DungeonService.Result.fail("La faille celeste est deja ouverte.");
+        data.setFractureActive(true, server.overworld().getGameTime());
+        thunderFracture(server);
+        server.getPlayerList().broadcastSystemMessage(Component.literal(
+            "§5[Faille] §dUne immense dechirure dimensionnelle s'ouvre dans le ciel !"), false);
+        return DungeonService.Result.ok("Faille celeste ouverte pour tout le serveur. Elle restera active jusqu'a /guild rift close.");
+    }
+
+    /** Closes only the persistent sky effect; dungeon timers and portal state are untouched. */
+    public static DungeonService.Result closeFracture(MinecraftServer server) {
+        DungeonData data = DungeonData.get(server);
+        if (!data.fractureActive()) return DungeonService.Result.fail("La faille celeste est deja fermee.");
+        data.setFractureActive(false, 0L);
+        server.getPlayerList().broadcastSystemMessage(Component.literal(
+            "§7[Faille] §fLa dechirure dimensionnelle se referme dans le ciel."), false);
+        return DungeonService.Result.ok("Faille celeste refermee. Le cycle des donjons n'a pas ete modifie.");
+    }
+
+    private static void thunderFracture(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 8.0F, 0.65F);
-            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 5.0F, 0.8F);
+            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 9.0F, 0.62F);
+            player.playNotifySound(SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 6.0F, 0.78F);
         }
     }
 
@@ -216,12 +239,12 @@ public final class RiftDungeonController {
     }
 
     public static void tick(MinecraftServer server) {
-        if (pendingSite == null) {
-            if (DungeonService.isPortalPresent(server) && server.overworld().getGameTime() % 5L == 0L)
-                emitSkyFracture(server.overworld(), DungeonData.get(server));
-            return;
-        }
         ServerLevel overworld = server.overworld();
+        DungeonData persistentData = DungeonData.get(server);
+        if (persistentData.fractureActive() && overworld.getGameTime() % 5L == 0L) {
+            emitSkyFracture(overworld, persistentData);
+        }
+        if (pendingSite == null) return;
         if (overworld.getGameTime() - chargeStartedAt < CHARGE_TICKS) return;
         BlockPos site = pendingSite;
         pendingSite = null;
@@ -237,8 +260,10 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         data.setRiftLevel(0);
         data.setNextRiftCheckGameTime(0L);
-        data.setFractureStartedAt(overworld.getGameTime());
-        thunderFracture(server, site.above(2));
+        if (!data.fractureActive()) {
+            data.setFractureActive(true, overworld.getGameTime());
+            thunderFracture(server);
+        }
         server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa fracture dechire le ciel dans un grondement de tonnerre ! Un donjon vient d'apparaitre."), false);
     }
 
