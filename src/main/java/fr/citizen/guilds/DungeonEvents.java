@@ -172,23 +172,77 @@ public final class DungeonEvents {
         int sx = localX < 8 ? 1 : -1;
         int sz = localZ < 8 ? 1 : -1;
         int[][] offsets = {{sx * 2, 0}, {0, sz * 2}, {sx * 3, sz * 2}, {sx * 2, sz * 3}, {sx * 3, sz * 3}, {sx, sz * 4}};
+        int difficulty = DungeonData.get(level.getServer()).riftDifficulty();
         if (wave == 1) {
-            addMob(level, site, EntityType.ZOMBIE, offsets[0], false, ids);
-            addMob(level, site, EntityType.ZOMBIE, offsets[1], false, ids);
-            addMob(level, site, EntityType.ZOMBIE, offsets[2], false, ids);
-            addMob(level, site, EntityType.SPIDER, offsets[3], false, ids);
+            EntityType<?>[] easy = {EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.ZOMBIE};
+            EntityType<?>[] medium = {EntityType.PILLAGER, EntityType.HUSK, EntityType.SPIDER, EntityType.STRAY};
+            EntityType<?>[] hard = {EntityType.VINDICATOR, EntityType.STRAY, EntityType.PILLAGER, EntityType.CAVE_SPIDER};
+            EntityType<?>[] extreme = {EntityType.EVOKER, EntityType.VINDICATOR, EntityType.WITCH, EntityType.VINDICATOR};
+            EntityType<?>[] selected = difficulty == 0 ? easy : difficulty == 1 ? medium : difficulty == 2 ? hard : extreme;
+            for (int i = 0; i < 4; i++) addMob(level, site, selected[i], offsets[i], false, ids);
         } else if (wave == 2) {
-            addMob(level, site, EntityType.SKELETON, offsets[0], false, ids);
-            addMob(level, site, EntityType.SKELETON, offsets[1], false, ids);
-            addMob(level, site, EntityType.HUSK, offsets[2], false, ids);
-            addMob(level, site, EntityType.HUSK, offsets[3], false, ids);
-            addMob(level, site, EntityType.SPIDER, offsets[4], false, ids);
+            EntityType<?>[] selected = switch (difficulty) {
+                case 0 -> new EntityType<?>[]{EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER};
+                case 1 -> new EntityType<?>[]{EntityType.PILLAGER, EntityType.VINDICATOR, EntityType.STRAY, EntityType.CAVE_SPIDER};
+                case 2 -> new EntityType<?>[]{EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH};
+                default -> new EntityType<?>[]{EntityType.EVOKER, EntityType.WITCH, EntityType.VINDICATOR, EntityType.VINDICATOR};
+            };
+            for (int i = 0; i < selected.length; i++) addMob(level, site, selected[i], offsets[i], false, ids);
+            addMiniBoss(level, site, difficulty, offsets[5], ids);
         } else if (wave == 3) {
-            addMob(level, site, CitizenGuildEntities.DEEP_GUARDIAN.get(), offsets[0], true, ids);
-            addMob(level, site, EntityType.VINDICATOR, offsets[2], false, ids);
-            addMob(level, site, EntityType.VINDICATOR, offsets[4], false, ids);
+            addRiftBoss(level, site, difficulty, offsets[0], ids);
+            addMob(level, site, difficulty >= 2 ? EntityType.EVOKER : EntityType.VINDICATOR, offsets[2], false, ids);
+            addMob(level, site, difficulty >= 1 ? EntityType.VINDICATOR : EntityType.SKELETON, offsets[4], false, ids);
         }
         return ids;
+    }
+
+    private static void addMiniBoss(ServerLevel level, BlockPos site, int difficulty, int[] offset, List<String> ids) {
+        EntityType<? extends Mob> type = difficulty >= 2 ? EntityType.VINDICATOR : EntityType.PILLAGER;
+        BlockPos spawn = site.offset(offset[0], 0, offset[1]);
+        Mob mob = type.create(level);
+        if (mob == null || !level.hasChunkAt(spawn) || !level.getBlockState(spawn).isAir()) return;
+        mob.moveTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, level.random.nextFloat() * 360F, 0F);
+        mob.addTag(MOB_TAG);
+        mob.setCustomName(Component.literal("§6Champion de la Faille"));
+        mob.setCustomNameVisible(true);
+        scaleMob(mob, 1.8F + difficulty * 0.5F, 28.0D + difficulty * 18.0D, 6.0D + difficulty * 3.0D);
+        if (level.addFreshEntity(mob)) ids.add(mob.getUUID().toString());
+    }
+
+    private static void addRiftBoss(ServerLevel level, BlockPos site, int difficulty, int[] offset, List<String> ids) {
+        EntityType<? extends Mob> type = switch (difficulty) {
+            case 0 -> EntityType.WITHER_SKELETON;
+            case 1 -> EntityType.PIGLIN_BRUTE;
+            case 2 -> EntityType.VINDICATOR;
+            default -> EntityType.EVOKER;
+        };
+        String[] names = {"§8Chevalier noir", "§cChevalier rouge", "§5Chevalier violet", "§0Moine noir"};
+        BlockPos spawn = site.offset(offset[0], 0, offset[1]);
+        if (!level.hasChunkAt(spawn) || !level.getBlockState(spawn).isAir() || !level.getBlockState(spawn.above()).isAir()) return;
+        Mob boss = type.create(level);
+        if (boss == null) return;
+        boss.moveTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, level.random.nextFloat() * 360F, 0F);
+        boss.addTag(MOB_TAG);
+        boss.setPersistenceRequired();
+        boss.setCustomName(Component.literal(names[difficulty]));
+        boss.setCustomNameVisible(true);
+        double health = new double[]{140.0D, 220.0D, 320.0D, 460.0D}[difficulty];
+        double damage = new double[]{9.0D, 13.0D, 18.0D, 23.0D}[difficulty];
+        scaleMob(boss, 1.0F, health, damage);
+        if (level.addFreshEntity(boss)) {
+            ids.add(boss.getUUID().toString());
+            level.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§5[Faille] §fLe boss " + names[difficulty] + " entre dans l'arène !"), false);
+        }
+    }
+
+    private static void scaleMob(Mob mob, float ignored, double health, double damage) {
+        var maxHealth = mob.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) maxHealth.setBaseValue(health);
+        var attack = mob.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attack != null) attack.setBaseValue(damage);
+        mob.setHealth((float) health);
+        mob.setPersistenceRequired();
     }
 
     private static void addMob(ServerLevel level, BlockPos site, EntityType<? extends Mob> type,
