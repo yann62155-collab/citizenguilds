@@ -96,12 +96,12 @@ public final class RiftDungeonController {
 
             // Keep the tear close enough to render reliably, but high and wide enough
             // to dominate the skyline from every player's current position.
-            double centerX = player.getX() + forwardX * 72.0D;
-            double centerZ = player.getZ() + forwardZ * 72.0D;
+            double centerX = player.getX() + forwardX * 16.0D;
+            double centerZ = player.getZ() + forwardZ * 16.0D;
             double skyY = Math.min(level.getMaxBuildHeight() - 18.0D,
-                Math.max(player.getY() + 48.0D, 150.0D));
+                Math.max(player.getY() + 12.0D, 100.0D));
 
-            int segments = 40;
+            int segments = 28;
             for (int i = 0; i <= segments; i++) {
                 double t = (i / (double) segments) * 2.0D - 1.0D;
                 double wave = Math.sin(t * 9.0D + elapsed * 0.035D) * 9.0D
@@ -109,8 +109,8 @@ public final class RiftDungeonController {
                 double jagged = Math.sin(i * 12.9898D + 78.233D) * 43758.5453D;
                 jagged = (jagged - Math.floor(jagged)) * 2.0D - 1.0D;
                 double y = skyY + (wave + jagged * 14.0D) * deformation;
-                double x = centerX + sideX * t * 180.0D;
-                double z = centerZ + sideZ * t * 180.0D;
+                double x = centerX + sideX * t * 28.0D;
+                double z = centerZ + sideZ * t * 28.0D;
 
                 // A dense violet core with bright electrical fractures along its edge.
                 level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, z,
