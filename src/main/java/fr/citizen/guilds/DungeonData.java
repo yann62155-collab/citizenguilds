@@ -24,6 +24,7 @@ public final class DungeonData extends SavedData {
     private long nextRiftCheckGameTime = 0L;
     private int fractureDeformationPercent = 65;
     private long fractureStartedAt = 0L;
+    private boolean fractureActive = false;
     private int riftDifficulty = 0;
 
     public static DungeonData get(MinecraftServer server) {
@@ -47,6 +48,7 @@ public final class DungeonData extends SavedData {
         data.nextRiftCheckGameTime = tag.getLong("nextRiftCheckGameTime");
         data.fractureDeformationPercent = Math.max(0, Math.min(100, tag.contains("fractureDeformationPercent") ? tag.getInt("fractureDeformationPercent") : 65));
         data.fractureStartedAt = tag.getLong("fractureStartedAt");
+        data.fractureActive = tag.getBoolean("fractureActive");
         data.riftDifficulty = Math.max(0, Math.min(3, tag.getInt("riftDifficulty")));
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
@@ -68,6 +70,7 @@ public final class DungeonData extends SavedData {
         tag.putLong("nextRiftCheckGameTime", nextRiftCheckGameTime);
         tag.putInt("fractureDeformationPercent", fractureDeformationPercent);
         tag.putLong("fractureStartedAt", fractureStartedAt);
+        tag.putBoolean("fractureActive", fractureActive);
         tag.putInt("riftDifficulty", riftDifficulty);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
@@ -91,6 +94,8 @@ public final class DungeonData extends SavedData {
     public long nextRiftCheckGameTime() { return nextRiftCheckGameTime; }
     public int fractureDeformationPercent() { return fractureDeformationPercent; }
     public long fractureStartedAt() { return fractureStartedAt; }
+    public boolean fractureActive() { return fractureActive; }
+    public void setFractureActive(boolean active, long startedAt) { fractureActive = active; if (active) fractureStartedAt = startedAt; setDirty(); }
     public int riftDifficulty() { return riftDifficulty; }
     public void setRiftDifficulty(int difficulty) { riftDifficulty = Math.max(0, Math.min(3, difficulty)); setDirty(); }
     public void setFractureDeformationPercent(int percent) { fractureDeformationPercent = Math.max(0, Math.min(100, percent)); setDirty(); }
