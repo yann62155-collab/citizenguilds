@@ -85,12 +85,18 @@ public final class RiftDungeonController {
             {-8.0D, 12.0D}, {-4.0D, 8.0D}, {1.0D, 4.0D},
             {-2.0D, 0.0D}, {3.0D, -4.0D}, {-1.0D, -8.0D}, {4.0D, -12.0D}
         };
-        for (int i = 0; i < crack.length; i++) {
-            double x = centerX + crack[i][0];
-            double y = skyY + crack[i][1];
-            level.sendParticles(ParticleTypes.PORTAL, x, y, centerZ, 5, 0.18D, 0.45D, 0.18D, 0.02D);
-            if (i % 2 == 0) {
-                level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, centerZ, 2, 0.25D, 0.35D, 0.25D, 0.01D);
+        // Send the particles directly to every player in the Overworld, even when far away.
+        // The longDistance flag prevents the normal 32-block particle visibility limit.
+        for (ServerPlayer player : level.players()) {
+            for (int i = 0; i < crack.length; i++) {
+                double x = centerX + crack[i][0];
+                double y = skyY + crack[i][1];
+                level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, centerZ,
+                    5, 0.18D, 0.45D, 0.18D, 0.02D);
+                if (i % 2 == 0) {
+                    level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true, x, y, centerZ,
+                        2, 0.25D, 0.35D, 0.25D, 0.01D);
+                }
             }
         }
     }
