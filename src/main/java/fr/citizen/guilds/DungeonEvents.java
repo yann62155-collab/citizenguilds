@@ -185,10 +185,10 @@ public final class DungeonEvents {
             for (int i = 0; i < 4; i++) addMob(level, site, selected.get(i), offsets[i], false, ids);
         } else if (wave == 2) {
             List<EntityType<? extends Mob>> selected = switch (difficulty) {
-                case 0 -> List.of{EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER};
-                case 1 -> List.of{EntityType.PILLAGER, EntityType.VINDICATOR, EntityType.STRAY, EntityType.CAVE_SPIDER};
-                case 2 -> List.of{EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH};
-                default -> List.of{EntityType.EVOKER, EntityType.WITCH, EntityType.VINDICATOR, EntityType.VINDICATOR};
+                case 0 -> List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER);
+                case 1 -> List.of(EntityType.PILLAGER, EntityType.VINDICATOR, EntityType.STRAY, EntityType.CAVE_SPIDER);
+                case 2 -> List.of(EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH);
+                default -> List.of(EntityType.EVOKER, EntityType.WITCH, EntityType.VINDICATOR, EntityType.VINDICATOR);
             };
             for (int i = 0; i < selected.size(); i++) addMob(level, site, selected.get(i), offsets[i], false, ids);
             addMiniBoss(level, site, difficulty, offsets[5], ids);
