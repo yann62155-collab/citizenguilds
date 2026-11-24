@@ -133,6 +133,7 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         if (data.fractureActive()) return DungeonService.Result.fail("La faille celeste est deja ouverte.");
         data.setFractureActive(true, server.overworld().getGameTime());
+        RiftSkyStatePayload.broadcast(true);
         thunderFracture(server);
         server.getPlayerList().broadcastSystemMessage(Component.literal(
             "§5[Faille] §dUne immense dechirure dimensionnelle s'ouvre dans le ciel !"), false);
@@ -144,6 +145,7 @@ public final class RiftDungeonController {
         DungeonData data = DungeonData.get(server);
         if (!data.fractureActive()) return DungeonService.Result.fail("La faille celeste est deja fermee.");
         data.setFractureActive(false, 0L);
+        RiftSkyStatePayload.broadcast(false);
         server.getPlayerList().broadcastSystemMessage(Component.literal(
             "§7[Faille] §fLa dechirure dimensionnelle se referme dans le ciel."), false);
         return DungeonService.Result.ok("Faille celeste refermee. Le cycle des donjons n'a pas ete modifie.");
@@ -172,7 +174,6 @@ public final class RiftDungeonController {
             }
         }
         if (DungeonService.isPortalPresent(server)) {
-            if (overworld.getGameTime() % 5L == 0L) emitSkyFracture(overworld, data);
             if (mechanism != null) mechanism.setIdleSpeed(1.0F);
             return;
         }
@@ -241,9 +242,6 @@ public final class RiftDungeonController {
     public static void tick(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
         DungeonData persistentData = DungeonData.get(server);
-        if (persistentData.fractureActive()) {
-            emitSkyFracture(overworld, persistentData);
-        }
         if (pendingSite == null) return;
         if (overworld.getGameTime() - chargeStartedAt < CHARGE_TICKS) return;
         BlockPos site = pendingSite;
@@ -262,6 +260,7 @@ public final class RiftDungeonController {
         data.setNextRiftCheckGameTime(0L);
         if (!data.fractureActive()) {
             data.setFractureActive(true, overworld.getGameTime());
+            RiftSkyStatePayload.broadcast(true);
             thunderFracture(server);
         }
         server.getPlayerList().broadcastSystemMessage(Component.literal("§5[Rift] §dLa fracture dechire le ciel dans un grondement de tonnerre ! Un donjon vient d'apparaitre."), false);
