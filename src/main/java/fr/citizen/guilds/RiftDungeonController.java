@@ -71,54 +71,58 @@ public final class RiftDungeonController {
             + " | Niveau " + level + "/6 | Chance actuelle " + chance + "% | Prochain controle dans ~" + minutes + " min.";
     }
 
-    /** Minute-based ramp: 5, 15, 30, 50, 75, then 95 percent per check. */
+    /** Uses CitizenGuilds' existing next-spawn timer; the gyroscope accelerates as it approaches zero. */
     public static void tickProgression(MinecraftServer server) {
         DungeonData data = DungeonData.get(server);
         BlockPos pos = data.riftPosition();
-        if (pos == null || !data.autoSpawnEnabled()) return;
+        if (pos == null) return;
         ServerLevel overworld = server.overworld();
         RiftMechanismEntity mechanism = findMechanism(overworld, pos);
         if (mechanism == null && overworld.hasChunkAt(pos)) {
             mechanism = CitizenGuildEntities.RIFT_MECHANISM.get().create(overworld);
             if (mechanism != null) {
                 mechanism.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
-                mechanism.setIdleSpeed(1.0F + data.riftLevel() * 1.5F);
+                mechanism.setIdleSpeed(1.0F);
                 overworld.addFreshEntity(mechanism);
             }
         }
-        if (DungeonService.isPortalPresent(server) || DungeonSessionData.get(server).active() || isCharging()) {
+        if (!data.autoSpawnEnabled() || DungeonService.isPortalPresent(server)
+            || DungeonSessionData.get(server).active() || isCharging()) {
             if (mechanism != null) mechanism.setIdleSpeed(1.0F);
             return;
         }
-        long now = overworld.getGameTime();
-        if (data.nextRiftCheckGameTime() <= 0L) {
-            data.setNextRiftCheckGameTime(now + MINUTE_TICKS);
-            return;
-        }
-        if (now < data.nextRiftCheckGameTime()) {
-            if (mechanism != null) mechanism.setIdleSpeed(1.0F + data.riftLevel() * 1.5F);
-            return;
-        }
-        int level = Math.min(6, data.riftLevel() + 1);
-        data.setRiftLevel(level);
-        data.setNextRiftCheckGameTime(now + MINUTE_TICKS);
-        if (mechanism != null) mechanism.setIdleSpeed(1.0F + level * 1.5F);
-        int chance = CHANCES[level - 1];
-        overworld.getServer().getPlayerList().broadcastSystemMessage(Component.literal(
-            "§6[Rift] §eLe mécanisme accélère ! Instabilité " + level + "/6 — chance d'ouverture : " + chance + "%."), false);
-        if (overworld.random.nextInt(100) >= chance) return;
 
+        long now = overworld.getGameTime();
+        long next = data.nextSpawnGameTime();
+        // Match the existing automatic system's initial two-minute delay.
+        if (next <= 0L) {
+            next = now + 40L * 20L;
+            data.setNextSpawnGameTime(next);
+        }
+        long total = Math.max(1L, data.spawnIntervalMinutes() * MINUTE_TICKS);
+        long remaining = Math.max(0L, next - now);
+        float progress = 1.0F - Math.min(1.0F, (float) remaining / (float) total);
+        float speed = 1.0F + progress * 7.0F;
+        if (mechanism != null) mechanism.setIdleSpeed(speed);
+        int percent = Math.min(100, Math.round(progress * 100.0F));
+        int level = Math.min(6, Math.max(0, Math.round(progress * 6.0F)));
+        if (data.riftLevel() != level) data.setRiftLevel(level);
+
+        if (remaining > 0L) return;
+        if (server.getPlayerList().getPlayerCount() == 0) return;
         DungeonSiteFinder.Search search = DungeonSiteFinder.findAuto(overworld, data);
         data.setLastSearchNote(search.note());
         if (search.site() == null) {
-            overworld.getServer().getPlayerList().broadcastSystemMessage(Component.literal(
-                "§c[Rift] §fLa faille cherche un lieu, mais aucun site de donjon valide n'a ete trouve."), false);
+            data.setNextSpawnGameTime(now + 20L * 60L);
+            if (mechanism != null) mechanism.setIdleSpeed(1.0F);
+            server.getPlayerList().broadcastSystemMessage(Component.literal(
+                "§c[Rift] §fLe cycle est termine, mais aucun emplacement valide n'a ete trouve. Nouvelle tentative dans 1 minute."), false);
             return;
         }
         DungeonService.Result result = begin(server, search.site());
         if (!result.ok()) {
-            overworld.getServer().getPlayerList().broadcastSystemMessage(Component.literal(
-                "§c[Rift] §fL'ouverture a echoue : " + result.message()), false);
+            data.setNextSpawnGameTime(now + 20L * 60L);
+            if (mechanism != null) mechanism.setIdleSpeed(1.0F);
         }
     }
 
