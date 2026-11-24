@@ -174,15 +174,15 @@ public final class DungeonEvents {
         int[][] offsets = {{sx * 2, 0}, {0, sz * 2}, {sx * 3, sz * 2}, {sx * 2, sz * 3}, {sx * 3, sz * 3}, {sx, sz * 4}};
         int difficulty = DungeonData.get(level.getServer()).riftDifficulty();
         if (wave == 1) {
-            EntityType<?>[] easy = {EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.ZOMBIE};
-            EntityType<?>[] medium = {EntityType.PILLAGER, EntityType.HUSK, EntityType.SPIDER, EntityType.STRAY};
-            EntityType<?>[] hard = {EntityType.VINDICATOR, EntityType.STRAY, EntityType.PILLAGER, EntityType.CAVE_SPIDER};
-            EntityType<?>[] extreme = {EntityType.EVOKER, EntityType.VINDICATOR, EntityType.WITCH, EntityType.VINDICATOR};
-            EntityType<?>[] selected = difficulty == 0 ? easy : difficulty == 1 ? medium : difficulty == 2 ? hard : extreme;
+            EntityType<? extends Mob>[] easy = {EntityType.ZOMBIE, EntityType.SKELETON, EntityType.SPIDER, EntityType.ZOMBIE};
+            EntityType<? extends Mob>[] medium = {EntityType.PILLAGER, EntityType.HUSK, EntityType.SPIDER, EntityType.STRAY};
+            EntityType<? extends Mob>[] hard = {EntityType.VINDICATOR, EntityType.STRAY, EntityType.PILLAGER, EntityType.CAVE_SPIDER};
+            EntityType<? extends Mob>[] extreme = {EntityType.EVOKER, EntityType.VINDICATOR, EntityType.WITCH, EntityType.VINDICATOR};
+            EntityType<? extends Mob>[] selected = difficulty == 0 ? easy : difficulty == 1 ? medium : difficulty == 2 ? hard : extreme;
             for (int i = 0; i < 4; i++) addMob(level, site, selected[i], offsets[i], false, ids);
         } else if (wave == 2) {
             EntityType<?>[] selected = switch (difficulty) {
-                case 0 -> new EntityType<?>[]{EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER};
+                case 0 -> new EntityType[]{EntityType.ZOMBIE, EntityType.SKELETON, EntityType.HUSK, EntityType.SPIDER};
                 case 1 -> new EntityType<?>[]{EntityType.PILLAGER, EntityType.VINDICATOR, EntityType.STRAY, EntityType.CAVE_SPIDER};
                 case 2 -> new EntityType<?>[]{EntityType.VINDICATOR, EntityType.EVOKER, EntityType.PILLAGER, EntityType.WITCH};
                 default -> new EntityType<?>[]{EntityType.EVOKER, EntityType.WITCH, EntityType.VINDICATOR, EntityType.VINDICATOR};
@@ -206,7 +206,7 @@ public final class DungeonEvents {
         mob.addTag(MOB_TAG);
         mob.setCustomName(Component.literal("§6Champion de la Faille"));
         mob.setCustomNameVisible(true);
-        scaleMob(mob, 1.8F + difficulty * 0.5F, 28.0D + difficulty * 18.0D, 6.0D + difficulty * 3.0D);
+        scaleMob(mob, 28.0D + difficulty * 18.0D, 6.0D + difficulty * 3.0D);
         if (level.addFreshEntity(mob)) ids.add(mob.getUUID().toString());
     }
 
@@ -229,14 +229,14 @@ public final class DungeonEvents {
         boss.setCustomNameVisible(true);
         double health = new double[]{140.0D, 220.0D, 320.0D, 460.0D}[difficulty];
         double damage = new double[]{9.0D, 13.0D, 18.0D, 23.0D}[difficulty];
-        scaleMob(boss, 1.0F, health, damage);
+        scaleMob(boss, health, damage);
         if (level.addFreshEntity(boss)) {
             ids.add(boss.getUUID().toString());
             level.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§5[Faille] §fLe boss " + names[difficulty] + " entre dans l'arène !"), false);
         }
     }
 
-    private static void scaleMob(Mob mob, float ignored, double health, double damage) {
+    private static void scaleMob(Mob mob, double health, double damage) {
         var maxHealth = mob.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealth != null) maxHealth.setBaseValue(health);
         var attack = mob.getAttribute(Attributes.ATTACK_DAMAGE);
