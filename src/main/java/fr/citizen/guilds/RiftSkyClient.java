@@ -29,7 +29,7 @@ public final class RiftSkyClient {
         PoseStack pose = event.getPoseStack();
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
-        float time = (mc.level.getGameTime() + event.getPartialTick()) * 0.025F;
+        float time = (mc.level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false)) * 0.025F;
 
         pose.pushPose();
         // The tear is drawn in camera space, high above and far beyond the player.
