@@ -170,7 +170,7 @@ public final class GuildCommands {
                         var site = data.lastSite();
                         if (site == null) return fail(c.getSource(), "Aucun site valide. Lance d'abord /guild dungeon scan (ou /guild dungeon spawnnow).");
                         data.clearLastSite();
-                        return result(c.getSource(), DungeonService.placePortal(server, site));
+                        return result(c.getSource(), RiftDungeonController.begin(server, site));
                     }))
                     .then(Commands.literal("remove").executes(c -> {
                         var server = c.getSource().getServer();
