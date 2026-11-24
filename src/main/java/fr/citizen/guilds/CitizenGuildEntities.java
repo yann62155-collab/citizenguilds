@@ -17,5 +17,13 @@ public final class CitizenGuildEntities {
             .clientTrackingRange(10)
             .build("citizenguilds:deep_guardian"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<RiftMechanismEntity>> RIFT_MECHANISM =
+        ENTITY_TYPES.register("rift_mechanism", () -> EntityType.Builder
+            .of(RiftMechanismEntity::new, MobCategory.MISC)
+            .sized(3.0F, 3.0F)
+            .clientTrackingRange(128)
+            .updateInterval(1)
+            .build("citizenguilds:rift_mechanism"));
+
     private CitizenGuildEntities() {}
 }
