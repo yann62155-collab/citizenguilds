@@ -94,7 +94,7 @@ public final class DungeonSiteFinder {
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos feet = new BlockPos(x, y, z);
             if (!isSafeSite(level, feet, data.minX(), data.minY(), data.minZ(), ignored)) continue;
-            if (!DungeonPortalStructure.canBuild(level, feet)) continue;
+            if (!DungeonPortalStructure.canBuild(level, feet, 0)) continue;
             Candidate candidate = new Candidate(feet, shelterScore(level, x, z, y));
             best = better(best, candidate);
             if (candidate.score >= 3) return candidate;
