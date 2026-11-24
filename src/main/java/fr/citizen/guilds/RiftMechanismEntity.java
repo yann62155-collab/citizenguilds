@@ -33,6 +33,12 @@ public final class RiftMechanismEntity extends Entity {
     public boolean isCharging() { return entityData.get(CHARGING); }
     public float rotationSpeed() { return entityData.get(SPEED); }
 
+    public void setIdleSpeed(float speed) {
+        entityData.set(CHARGING, false);
+        entityData.set(TARGET, 1.0F);
+        entityData.set(SPEED, Math.max(1.0F, Math.min(12.0F, speed)));
+    }
+
     public void setCharging(boolean charging, float targetSpeed) {
         entityData.set(CHARGING, charging);
         entityData.set(TARGET, charging ? Math.max(1.0F, Math.min(20.0F, targetSpeed)) : 1.0F);
@@ -65,9 +71,10 @@ public final class RiftMechanismEntity extends Entity {
                 discard();
                 return;
             }
-            // Once the associated gate has been removed, the idle mechanism has no
-            // reason to remain in the overworld.
-            if (!isCharging() && !DungeonData.get(serverLevel.getServer()).hasPlacedPortal()) {
+            // The hub mechanism exists independently of any active dungeon gate.
+            // It is removed only when its saved hub location is cleared or moved.
+            var configuredRift = DungeonData.get(serverLevel.getServer()).riftPosition();
+            if (configuredRift == null || !blockPosition().equals(configuredRift)) {
                 discard();
                 return;
             }
