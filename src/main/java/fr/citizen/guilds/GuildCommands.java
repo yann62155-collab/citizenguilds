@@ -175,7 +175,9 @@ public final class GuildCommands {
                     .then(Commands.literal("remove").executes(c -> {
                         var server = c.getSource().getServer();
                         if (DungeonSessionData.get(server).active()) return fail(c.getSource(), "Termine d'abord l'expedition avec /guild dungeon end.");
-                        if (!DungeonService.isPortalPresent(server)) return fail(c.getSource(), "Aucune porte n'est ouverte.");
+                        DungeonData portalData = DungeonData.get(server);
+                        if (!portalData.hasPlacedPortal() && !DungeonService.isPortalPresent(server))
+                            return fail(c.getSource(), "Aucun portail enregistre. Si des blocs decoratifs restent, utilise /guild dungeon cleanup.");
                         DungeonService.removePortal(server);
                         return ok(c.getSource(), "Porte retiree. Prochaine porte automatique programmee.");
                     })))
