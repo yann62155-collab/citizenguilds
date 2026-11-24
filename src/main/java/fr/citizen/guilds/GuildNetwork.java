@@ -43,6 +43,17 @@ public final class GuildNetwork {
         var registrar = event.registrar("2");
         registrar.playToServer(Request.TYPE, Request.CODEC, GuildNetwork::handleRequest);
         registrar.playToClient(Snapshot.TYPE, Snapshot.CODEC, GuildNetwork::handleSnapshot);
+        registrar.playToClient(RiftSkyStatePayload.TYPE, RiftSkyStatePayload.CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+                    try {
+                        Class<?> client = Class.forName("fr.citizen.guilds.RiftSkyClient");
+                        client.getMethod("setActive", boolean.class).invoke(null, payload.active());
+                    } catch (ReflectiveOperationException exception) {
+                        throw new IllegalStateException("Unable to apply global rift state on client", exception);
+                    }
+                }
+            }));
     }
 
     private static void handleRequest(Request request, IPayloadContext context) {
