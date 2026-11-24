@@ -76,7 +76,11 @@ public final class RiftDungeonController {
             + " | Niveau " + level + "/6 | Chance actuelle " + chance + "% | Prochain controle dans ~" + minutes + " min.";
     }
 
-    /** Draws a world-wide sky tear in every player's own view, so distance on the map never hides it. */
+    /**
+     * Draws the fracture in each connected player's own sky view.
+     * The effect is deliberately camera-relative: players anywhere in the Overworld
+     * see the same sky event, without requiring the distant portal chunk to be loaded.
+     */
     private static void emitSkyFracture(ServerLevel level, DungeonData data) {
         long elapsed = Math.max(0L, level.getGameTime() - data.fractureStartedAt());
         float growth = Math.min(1.0F, elapsed / 6000.0F); // five minutes to reach the staff target
@@ -89,24 +93,32 @@ public final class RiftDungeonController {
             double forwardZ = Math.cos(yaw);
             double sideX = -forwardZ;
             double sideZ = forwardX;
-            double centerX = player.getX() + forwardX * 105.0D;
-            double centerZ = player.getZ() + forwardZ * 105.0D;
-            double skyY = Math.min(level.getMaxBuildHeight() - 18.0D, Math.max(player.getY() + 52.0D, 150.0D));
-            int segments = 32;
+
+            // Keep the tear close enough to render reliably, but high and wide enough
+            // to dominate the skyline from every player's current position.
+            double centerX = player.getX() + forwardX * 72.0D;
+            double centerZ = player.getZ() + forwardZ * 72.0D;
+            double skyY = Math.min(level.getMaxBuildHeight() - 18.0D,
+                Math.max(player.getY() + 48.0D, 150.0D));
+
+            int segments = 40;
             for (int i = 0; i <= segments; i++) {
                 double t = (i / (double) segments) * 2.0D - 1.0D;
-                double wave = Math.sin(t * 9.0D + elapsed * 0.035D) * 7.0D
-                    + Math.sin(t * 19.0D - elapsed * 0.021D) * 3.5D;
+                double wave = Math.sin(t * 9.0D + elapsed * 0.035D) * 9.0D
+                    + Math.sin(t * 19.0D - elapsed * 0.021D) * 4.5D;
                 double jagged = Math.sin(i * 12.9898D + 78.233D) * 43758.5453D;
                 jagged = (jagged - Math.floor(jagged)) * 2.0D - 1.0D;
-                double y = skyY + (wave + jagged * 12.0D) * deformation;
-                double x = centerX + sideX * t * 125.0D;
-                double z = centerZ + sideZ * t * 125.0D;
+                double y = skyY + (wave + jagged * 14.0D) * deformation;
+                double x = centerX + sideX * t * 180.0D;
+                double z = centerZ + sideZ * t * 180.0D;
+
+                // A dense violet core with bright electrical fractures along its edge.
                 level.sendParticles(player, ParticleTypes.PORTAL, true, x, y, z,
-                    3, 0.5D + deformation * 0.8D, 0.7D + deformation * 0.8D, 0.5D + deformation * 0.8D, 0.015D);
+                    4, 0.8D + deformation, 0.9D + deformation, 0.8D + deformation, 0.012D);
                 if (i % 2 == 0) {
                     level.sendParticles(player, ParticleTypes.ELECTRIC_SPARK, true, x, y, z,
-                        2, 0.35D + deformation * 0.5D, 0.45D + deformation * 0.5D, 0.35D + deformation * 0.5D, 0.01D);
+                        2, 0.45D + deformation * 0.5D, 0.55D + deformation * 0.5D,
+                        0.45D + deformation * 0.5D, 0.008D);
                 }
             }
         }
