@@ -58,11 +58,25 @@ public final class RiftMechanismEntity extends Entity {
         super.tick();
         noPhysics = true;
         setDeltaMovement(0, 0, 0);
-        if (!level().isClientSide && isCharging()) {
-            chargeTicks = Math.min(400, chargeTicks + 1);
-            float p = chargeTicks / 400.0F;
-            float eased = p * p * (3.0F - 2.0F * p);
-            entityData.set(SPEED, 1.0F + (entityData.get(TARGET) - 1.0F) * eased);
+        if (!level().isClientSide && level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            // A server restart clears the controller's in-flight state. Remove the
+            // saved visual entity rather than leaving a permanently charging relic.
+            if (isCharging() && !RiftDungeonController.isCharging()) {
+                discard();
+                return;
+            }
+            // Once the associated gate has been removed, the idle mechanism has no
+            // reason to remain in the overworld.
+            if (!isCharging() && !DungeonData.get(serverLevel.getServer()).hasPlacedPortal()) {
+                discard();
+                return;
+            }
+            if (isCharging()) {
+                chargeTicks = Math.min(400, chargeTicks + 1);
+                float p = chargeTicks / 400.0F;
+                float eased = p * p * (3.0F - 2.0F * p);
+                entityData.set(SPEED, 1.0F + (entityData.get(TARGET) - 1.0F) * eased);
+            }
         }
         if (level().isClientSide && tickCount % 2 == 0) {
             double angle = tickCount * 0.11D;
