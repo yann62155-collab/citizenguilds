@@ -241,7 +241,7 @@ public final class RiftDungeonController {
     public static void tick(MinecraftServer server) {
         ServerLevel overworld = server.overworld();
         DungeonData persistentData = DungeonData.get(server);
-        if (persistentData.fractureActive() && overworld.getGameTime() % 5L == 0L) {
+        if (persistentData.fractureActive()) {
             emitSkyFracture(overworld, persistentData);
         }
         if (pendingSite == null) return;
