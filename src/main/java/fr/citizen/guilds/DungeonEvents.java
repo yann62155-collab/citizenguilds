@@ -95,6 +95,7 @@ public final class DungeonEvents {
         tickCounter = 0;
         MinecraftServer server = event.getServer();
         DungeonSessionData session = DungeonSessionData.get(server);
+        RiftDungeonController.tick(server);
         if (!session.active()) {
             DungeonService.tickAutoSpawn(server);
             return;
