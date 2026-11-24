@@ -224,7 +224,16 @@ public final class GuildCommands {
                 .then(Commands.literal("remove").executes(c ->
                     result(c.getSource(), RiftDungeonController.removeHubRift(c.getSource().getServer()))))
                 .then(Commands.literal("status").executes(c ->
-                    ok(c.getSource(), RiftDungeonController.status(c.getSource().getServer())))))
+                    ok(c.getSource(), RiftDungeonController.status(c.getSource().getServer()))))
+                .then(Commands.literal("deformation").then(Commands.argument("pourcentage", IntegerArgumentType.integer(0, 100)).executes(c -> {
+                    int percent = IntegerArgumentType.getInteger(c, "pourcentage");
+                    DungeonData.get(c.getSource().getServer()).setFractureDeformationPercent(percent);
+                    return ok(c.getSource(), "Deformation maximale de la fracture reglee a " + percent + "%. La fracture evoluera progressivement jusqu'a cette intensite.");
+                })))
+                .then(Commands.literal("deformationstatus").executes(c -> {
+                    DungeonData data = DungeonData.get(c.getSource().getServer());
+                    return ok(c.getSource(), "Deformation cible : " + data.fractureDeformationPercent() + "%.");
+                })))
             .then(Commands.literal("journal").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
