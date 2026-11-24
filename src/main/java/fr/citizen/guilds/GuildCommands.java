@@ -210,6 +210,21 @@ public final class GuildCommands {
                     return ok(c.getSource(), "Site enregistre : X " + site.getX() + ", Y " + site.getY() + ", Z " + site.getZ() + " (Overworld).");
                 }))
             )
+            .then(Commands.literal("rift").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("set").executes(c -> {
+                    ServerPlayer player = c.getSource().getPlayerOrException();
+                    return result(c.getSource(), RiftDungeonController.setHubPosition(
+                        c.getSource().getServer(), player.blockPosition()));
+                }))
+                .then(Commands.literal("move").executes(c -> {
+                    ServerPlayer player = c.getSource().getPlayerOrException();
+                    return result(c.getSource(), RiftDungeonController.setHubPosition(
+                        c.getSource().getServer(), player.blockPosition()));
+                }))
+                .then(Commands.literal("remove").executes(c ->
+                    result(c.getSource(), RiftDungeonController.removeHubRift(c.getSource().getServer()))))
+                .then(Commands.literal("status").executes(c ->
+                    ok(c.getSource(), RiftDungeonController.status(c.getSource().getServer())))))
             .then(Commands.literal("journal").executes(c -> {
                 ServerPlayer p=c.getSource().getPlayerOrException();
                 GuildSavedData.Guild g=GuildSavedData.get(p.getServer()).guildOf(p);
