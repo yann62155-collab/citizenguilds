@@ -19,6 +19,9 @@ public final class DungeonData extends SavedData {
     private BlockPos lastSite = null;
     private long nextSpawnGameTime;
     private String lastSearchNote = "";
+    private BlockPos riftPosition = null;
+    private int riftLevel = 0;
+    private long nextRiftCheckGameTime = 0L;
 
     public static DungeonData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
@@ -36,6 +39,9 @@ public final class DungeonData extends SavedData {
         data.portalSpawnGameTime = tag.getLong("portalSpawnGameTime");
         data.nextSpawnGameTime = tag.getLong("nextSpawnGameTime");
         data.lastSearchNote = tag.getString("lastSearchNote");
+        if (tag.getBoolean("hasRift")) data.riftPosition = new BlockPos(tag.getInt("riftX"), tag.getInt("riftY"), tag.getInt("riftZ"));
+        data.riftLevel = Math.max(0, Math.min(6, tag.getInt("riftLevel")));
+        data.nextRiftCheckGameTime = tag.getLong("nextRiftCheckGameTime");
         if (tag.getBoolean("hasSite")) data.lastSite = new BlockPos(tag.getInt("siteX"), tag.getInt("siteY"), tag.getInt("siteZ"));
         return data;
     }
@@ -50,6 +56,10 @@ public final class DungeonData extends SavedData {
         tag.putLong("portalSpawnGameTime", portalSpawnGameTime);
         tag.putLong("nextSpawnGameTime", nextSpawnGameTime);
         tag.putString("lastSearchNote", lastSearchNote == null ? "" : lastSearchNote);
+        tag.putBoolean("hasRift", riftPosition != null);
+        if (riftPosition != null) { tag.putInt("riftX", riftPosition.getX()); tag.putInt("riftY", riftPosition.getY()); tag.putInt("riftZ", riftPosition.getZ()); }
+        tag.putInt("riftLevel", riftLevel);
+        tag.putLong("nextRiftCheckGameTime", nextRiftCheckGameTime);
         tag.putBoolean("hasSite", lastSite != null);
         if (lastSite != null) {
             tag.putInt("siteX", lastSite.getX());
@@ -67,6 +77,12 @@ public final class DungeonData extends SavedData {
     public int spawnIntervalMinutes() { return spawnIntervalMinutes; }
     public long portalSpawnGameTime() { return portalSpawnGameTime; }
     public BlockPos lastSite() { return lastSite; }
+    public BlockPos riftPosition() { return riftPosition; }
+    public int riftLevel() { return riftLevel; }
+    public long nextRiftCheckGameTime() { return nextRiftCheckGameTime; }
+    public void setRiftPosition(BlockPos pos) { riftPosition = pos == null ? null : pos.immutable(); riftLevel = 0; nextRiftCheckGameTime = 0L; setDirty(); }
+    public void setRiftLevel(int level) { riftLevel = Math.max(0, Math.min(6, level)); setDirty(); }
+    public void setNextRiftCheckGameTime(long time) { nextRiftCheckGameTime = time; setDirty(); }
 
     public void setPortalSpawnGameTime(long gameTime) { portalSpawnGameTime = gameTime; setDirty(); }
     public long nextSpawnGameTime() { return nextSpawnGameTime; }
