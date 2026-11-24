@@ -87,37 +87,48 @@ public final class DungeonPortalStructure {
     }
 
     public static boolean canBuild(ServerLevel level, BlockPos ground, int difficulty) {
-        for (Map.Entry<BlockPos, Block> entry : layout(ground, difficulty).entrySet()) {
-            BlockPos pos = entry.getKey();
-            if (pos.getY() <= level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight()) return false;
-            if (!level.hasChunkAt(pos) || !level.getBlockState(pos).canBeReplaced()) return false;
-        }
-        return true;
+        BlockPos anchor = ground.above(2);
+        return anchor.getY() > level.getMinBuildHeight()
+            && anchor.getY() < level.getMaxBuildHeight()
+            && level.hasChunkAt(anchor)
+            && level.getBlockState(anchor).canBeReplaced();
     }
 
+    /**
+     * The portal is now entirely the custom 3D entity. The only block left is
+     * the invisible interaction anchor; legacy decorative blocks are no longer placed.
+     */
     public static boolean place(ServerLevel level, BlockPos ground, int difficulty) {
         if (!canBuild(level, ground, difficulty)) return false;
-        for (Map.Entry<BlockPos, Block> entry : layout(ground, difficulty).entrySet()) {
-            level.setBlock(entry.getKey(), entry.getValue().defaultBlockState(), 3);
-        }
-        // The custom client renderer supplies the actual 3D arch, animated circular vortex and floating crystal.
+        BlockPos anchor = ground.above(2);
+        level.setBlock(anchor, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
         DungeonGateVisualEntity visual = CitizenGuildEntities.DUNGEON_GATE_VISUAL.get().create(level);
         if (visual != null) {
             visual.setPos(ground.getX() + 0.5D, ground.getY() + 2.0D, ground.getZ() + 0.5D);
-            level.addFreshEntity(visual);
+            if (!level.addFreshEntity(visual)) {
+                level.removeBlock(anchor, false);
+                return false;
+            }
+        } else {
+            level.removeBlock(anchor, false);
+            return false;
         }
         return true;
     }
 
+    /** Removes both the current 3D portal and any blocks left by older builds. */
     public static void remove(ServerLevel level, BlockPos portalCenter, int difficulty) {
         BlockPos ground = portalCenter.below(2);
+        // Remove all legacy monument blocks, but only where they still match our old layout.
         for (Map.Entry<BlockPos, Block> entry : layout(ground, difficulty).entrySet()) {
             BlockPos pos = entry.getKey();
-            BlockState state = level.getBlockState(pos);
-            if (state.is(entry.getValue())) level.removeBlock(pos, false);
+            if (level.getBlockState(pos).is(entry.getValue())) level.removeBlock(pos, false);
+        }
+        if (level.getBlockState(portalCenter).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
+            level.removeBlock(portalCenter, false);
         }
         for (DungeonGateVisualEntity visual : level.getEntitiesOfClass(DungeonGateVisualEntity.class,
-                new AABB(ground).inflate(8.0D))) {
+                new AABB(ground).inflate(12.0D))) {
             visual.discard();
         }
     }
