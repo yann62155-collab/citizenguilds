@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -43,6 +44,10 @@ public final class GuildNetwork {
         var registrar = event.registrar("2");
         registrar.playToServer(Request.TYPE, Request.CODEC, GuildNetwork::handleRequest);
         registrar.playToClient(Snapshot.TYPE, Snapshot.CODEC, GuildNetwork::handleSnapshot);
+        registrar.playToClient(RiftSkyStatePayload.TYPE, RiftSkyStatePayload.CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                net.neoforged.fml.DistExecutor.unsafeRunWhenOn(net.neoforged.api.distmarker.Dist.CLIENT,
+                    () -> () -> RiftSkyClient.setActive(payload.active()))));
     }
 
     private static void handleRequest(Request request, IPayloadContext context) {
