@@ -52,17 +52,22 @@ public final class DungeonService {
     /** Builds the monument on a ground position (feet level) and registers it. */
     public static Result placePortal(MinecraftServer server, BlockPos ground) {
         ServerLevel overworld = server.overworld();
-        if (!DungeonPortalStructure.place(overworld, ground))
-            return Result.fail("Impossible de construire la porte a cet endroit (terrain occupe ou non charge).");
         DungeonData data = DungeonData.get(server);
+        int difficulty = overworld.random.nextInt(4);
+        data.setRiftDifficulty(difficulty);
+        if (!DungeonPortalStructure.place(overworld, ground, difficulty))
+            return Result.fail("Impossible de construire la faille a cet endroit (terrain occupe ou non charge).");
         BlockPos gate = ground.above(2);
         data.setLastSite(gate);
         data.setPortalSpawnGameTime(now(server));
         data.setNextSpawnGameTime(0L);
         data.setLastSearchNote("Porte ouverte en " + ground.getX() + " " + ground.getY() + " " + ground.getZ() + ".");
-        broadcast(server, "§6[Donjon] §fUne porte ancienne vient d'apparaitre en §eX " + ground.getX() + ", Y " + ground.getY()
-            + ", Z " + ground.getZ() + "§f (Overworld). La premiere guilde qui la touche ouvre l'expedition ! Elle se refermera dans 2 heures.");
-        return Result.ok("Porte placee en X " + ground.getX() + ", Y " + ground.getY() + ", Z " + ground.getZ() + ".");
+        String[] names = {"Bleue - Chevalier noir", "Rose - Chevalier rouge", "Rouge - Chevalier violet", "Noire orageuse - Moine noir"};
+        String[] colors = {"§9", "§d", "§c", "§8"};
+        broadcast(server, "§6[Faille] " + colors[difficulty] + "Une faille " + names[difficulty]
+            + " vient d'apparaitre en §eX " + ground.getX() + ", Y " + ground.getY()
+            + ", Z " + ground.getZ() + "§f. Le cristal indique le niveau de danger !");
+        return Result.ok("Faille " + names[difficulty] + " placee en X " + ground.getX() + ", Y " + ground.getY() + ", Z " + ground.getZ() + ".");
     }
 
     /** Removes the monument (if any), forgets the site and schedules the next automatic portal. */
@@ -73,7 +78,7 @@ public final class DungeonService {
         if (site != null && data.hasPlacedPortal()) {
             overworld.getChunkAt(site);
             if (overworld.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                DungeonPortalStructure.remove(overworld, site);
+                DungeonPortalStructure.remove(overworld, site, data.riftDifficulty());
         }
         RiftDungeonController.clear(server);
         data.clearLastSite();
