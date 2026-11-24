@@ -76,9 +76,10 @@ public final class DungeonService {
         BlockPos site = data.lastSite();
         ServerLevel overworld = server.overworld();
         if (site != null && data.hasPlacedPortal()) {
+            // Always run the complete cleanup, even if the central interaction block
+            // was replaced or broken: decorative blocks and the visual entity must go too.
             overworld.getChunkAt(site);
-            if (overworld.getBlockState(site).is(CitizenDungeonBlocks.DUNGEON_GATE.get()))
-                DungeonPortalStructure.remove(overworld, site, data.riftDifficulty());
+            DungeonPortalStructure.remove(overworld, site, data.riftDifficulty());
         }
         RiftDungeonController.clear(server);
         data.clearLastSite();
