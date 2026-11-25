@@ -88,10 +88,16 @@ public final class DungeonPortalStructure {
 
     public static boolean canBuild(ServerLevel level, BlockPos ground, int difficulty) {
         BlockPos anchor = ground.above(2);
-        return anchor.getY() > level.getMinBuildHeight()
-            && anchor.getY() < level.getMaxBuildHeight()
-            && level.hasChunkAt(anchor)
-            && level.getBlockState(anchor).canBeReplaced();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                BlockPos trigger = anchor.offset(dx, dy, 0);
+                if (trigger.getY() <= level.getMinBuildHeight()
+                    || trigger.getY() >= level.getMaxBuildHeight()
+                    || !level.hasChunkAt(trigger)
+                    || !level.getBlockState(trigger).canBeReplaced()) return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -101,7 +107,14 @@ public final class DungeonPortalStructure {
     public static boolean place(ServerLevel level, BlockPos ground, int difficulty) {
         if (!canBuild(level, ground, difficulty)) return false;
         BlockPos anchor = ground.above(2);
-        level.setBlock(anchor, CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
+        // A 3x3 invisible, non-colliding trigger field fills the actual portal opening.
+        // It is part of the portal itself, not a separate teleport pad.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                level.setBlock(anchor.offset(dx, dy, 0),
+                    CitizenDungeonBlocks.DUNGEON_GATE.get().defaultBlockState(), 3);
+            }
+        }
         DungeonGateVisualEntity visual = CitizenGuildEntities.DUNGEON_GATE_VISUAL.get().create(level);
         if (visual != null) {
             visual.setPos(ground.getX() + 0.5D, ground.getY() + 2.0D, ground.getZ() + 0.5D);
@@ -124,8 +137,14 @@ public final class DungeonPortalStructure {
             BlockPos pos = entry.getKey();
             if (level.getBlockState(pos).is(entry.getValue())) level.removeBlock(pos, false);
         }
-        if (level.getBlockState(portalCenter).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
-            level.removeBlock(portalCenter, false);
+        // Remove the full invisible trigger plane in the opening.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                BlockPos trigger = portalCenter.offset(dx, dy, 0);
+                if (level.getBlockState(trigger).is(CitizenDungeonBlocks.DUNGEON_GATE.get())) {
+                    level.removeBlock(trigger, false);
+                }
+            }
         }
         for (DungeonGateVisualEntity visual : level.getEntitiesOfClass(DungeonGateVisualEntity.class,
                 new AABB(ground).inflate(12.0D))) {
