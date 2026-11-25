@@ -107,9 +107,16 @@ public final class DungeonSiteFinder {
                         if (rx < minRegionX || rz < minRegionZ || rx > maxRegionX || rz > maxRegionZ) return;
                         int baseX = rx * 32;
                         int baseZ = rz * 32;
-                        // Probe a shuffled subset of slots in this region, rather than every possible world coordinate.
-                        List<Integer> slots = new ArrayList<>(1024);
-                        for (int slot = 0; slot < 1024; slot++) slots.add(slot);
+                        // Read the region header (4 KiB): non-zero location entries are generated chunk slots.
+                        // This avoids issuing 1024 asynchronous NBT reads for every region file.
+                        List<Integer> slots = new ArrayList<>(128);
+                        try (java.io.RandomAccessFile region = new java.io.RandomAccessFile(path.toFile(), "r")) {
+                            if (region.length() < 4096L) return;
+                            for (int slot = 0; slot < 1024; slot++) {
+                                region.seek(slot * 4L);
+                                if (region.readInt() != 0) slots.add(slot);
+                            }
+                        }
                         Collections.shuffle(slots, new java.util.Random(level.getRandom().nextLong()));
                         int foundInRegion = 0;
                         for (int slot : slots) {
