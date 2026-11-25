@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -21,6 +22,10 @@ import net.minecraft.world.phys.BlockHitResult;
  */
 public final class DungeonPortalBlock extends Block {
     public DungeonPortalBlock(BlockBehaviour.Properties properties) { super(properties); }
+
+    /** The 3x3 trigger field must never render as purple/black missing-texture cubes. */
+    @Override
+    public RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
