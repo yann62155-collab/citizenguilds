@@ -54,13 +54,25 @@ public final class DungeonSiteFinder {
             if (!chunkExistsOnDisk(level, center)) continue;
             existingChunks++;
 
-            // Load only chunks already present on disk; never generate a new region just to place a portal.
-            for (int cx = -1; cx <= 1; cx++) {
-                for (int cz = -1; cz <= 1; cz++) {
-                    ChunkPos around = new ChunkPos(center.x + cx, center.z + cz);
-                    if (chunkExistsOnDisk(level, around)) level.getChunk(around.x, around.z);
+            // The site checks inspect a 7x7 block footprint. Require every chunk touched by
+            // that footprint to have been generated already; never ask Minecraft to create one.
+            boolean footprintReady = true;
+            int minChunkX = new ChunkPos(x - 3, z - 3).x;
+            int maxChunkX = new ChunkPos(x + 3, z + 3).x;
+            int minChunkZ = new ChunkPos(x - 3, z - 3).z;
+            int maxChunkZ = new ChunkPos(x + 3, z + 3).z;
+            for (int cx = minChunkX; cx <= maxChunkX && footprintReady; cx++) {
+                for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                    ChunkPos around = new ChunkPos(cx, cz);
+                    if (!chunkExistsOnDisk(level, around)) {
+                        footprintReady = false;
+                        break;
+                    }
+                    // Safe: read the chunk only after confirming its saved region data exists.
+                    if (!level.hasChunk(cx, cz)) level.getChunk(cx, cz);
                 }
             }
+            if (!footprintReady) continue;
 
             Candidate candidate = searchAround(level, data, center.getMiddleBlockX(),
                 center.getMiddleBlockZ(), 0, 112, 180, null);
