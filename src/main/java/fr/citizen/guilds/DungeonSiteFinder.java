@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +17,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.LevelResource;
 
 /**
  * Searches a natural surface spot for the portal monument. It never modifies the terrain itself.
@@ -33,69 +37,105 @@ public final class DungeonSiteFinder {
     private record Candidate(BlockPos pos, int score) {}
 
     /**
-     * Random search over the configured map zone. Player positions are never used
-     * as search origins; only the minimum X/Y/Z limits and existing world terrain matter.
+     * Search generated region files first, then sample existing chunks from them.
+     * This avoids random misses across the enormous world border and never uses
+     * an administrator/player position as the search origin.
      */
     public static Search findAuto(ServerLevel level, DungeonData data) {
         RandomSource random = level.getRandom();
-        Candidate best = null;
-        int existingChunks = 0;
-        // Sample the entire usable Overworld border, not a small square around an admin
-        // or a fixed 1500-block patch. The configured coordinates are lower bounds only.
-        final int mapAttempts = 192;
-        final double minX = Math.max(data.minX() + 32.0D, level.getWorldBorder().getMinX() + 32.0D);
-        final double minZ = Math.max(data.minZ() + 32.0D, level.getWorldBorder().getMinZ() + 32.0D);
-        final double maxX = level.getWorldBorder().getMaxX() - 32.0D;
-        final double maxZ = level.getWorldBorder().getMaxZ() - 32.0D;
-        if (minX >= maxX || minZ >= maxZ) {
-            return new Search(null, "Les coordonnees minimales depassent les limites de la carte.");
+        List<ChunkPos> generated = listGeneratedChunks(level, data);
+        if (generated.isEmpty()) {
+            return new Search(null, "Aucun chunk deja genere trouve au-dela de X>=" + data.minX()
+                + ", Z>=" + data.minZ() + ". Explore la carte dans cette zone avant le prochain essai.");
         }
-
-        for (int attempt = 0; attempt < mapAttempts; attempt++) {
-            int x = (int)Math.floor(minX + random.nextDouble() * (maxX - minX));
-            int z = (int)Math.floor(minZ + random.nextDouble() * (maxZ - minZ));
-            BlockPos probe = new BlockPos(x, level.getMinBuildHeight(), z);
-            if (!level.getWorldBorder().isWithinBounds(probe)) continue;
-
-            ChunkPos center = new ChunkPos(probe);
-            if (!chunkExistsOnDisk(level, center)) continue;
-            existingChunks++;
-
-            // The site checks inspect a 7x7 block footprint. Require every chunk touched by
-            // that footprint to have been generated already; never ask Minecraft to create one.
+        Collections.shuffle(generated, new java.util.Random(random.nextLong()));
+        Candidate best = null;
+        int tested = 0;
+        for (ChunkPos center : generated) {
+            if (tested++ >= 256) break;
+            // Load only the already-generated 3x3 neighbourhood. Missing chunks are skipped.
             boolean footprintReady = true;
-            int minChunkX = new ChunkPos(x - 3, z - 3).x;
-            int maxChunkX = new ChunkPos(x + 3, z + 3).x;
-            int minChunkZ = new ChunkPos(x - 3, z - 3).z;
-            int maxChunkZ = new ChunkPos(x + 3, z + 3).z;
-            for (int cx = minChunkX; cx <= maxChunkX && footprintReady; cx++) {
-                for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-                    ChunkPos around = new ChunkPos(cx, cz);
-                    if (!chunkExistsOnDisk(level, around)) {
+            for (int cx = center.x - 1; cx <= center.x + 1 && footprintReady; cx++) {
+                for (int cz = center.z - 1; cz <= center.z + 1; cz++) {
+                    ChunkPos neighbour = new ChunkPos(cx, cz);
+                    if (!chunkExistsOnDisk(level, neighbour)) {
                         footprintReady = false;
                         break;
                     }
-                    // Safe: read the chunk only after confirming its saved region data exists.
                     if (!level.hasChunk(cx, cz)) level.getChunk(cx, cz);
                 }
             }
             if (!footprintReady) continue;
 
             Candidate candidate = searchAround(level, data, center.getMiddleBlockX(),
-                center.getMiddleBlockZ(), 0, 112, 320, null);
+                center.getMiddleBlockZ(), 0, 72, 160, null);
             best = better(best, candidate);
-            if (best != null && best.score >= 3) {
-                return new Search(best.pos, "Site aleatoire trouve n'importe ou dans les limites de la carte, au-dela des coordonnees minimales.");
+            if (candidate != null && candidate.score >= 3) {
+                return new Search(candidate.pos,
+                    "Site choisi aleatoirement parmi les chunks deja generes, sans utiliser la position des joueurs.");
             }
         }
-
-        if (best != null) return new Search(best.pos,
-            "Site aleatoire trouve n'importe ou dans les limites de la carte, au-dela des coordonnees minimales.");
-        if (existingChunks == 0) {
-            return new Search(null, "Aucun chunk deja genere trouve dans la carte au-dela de X>=" + data.minX()
-                + ", Z>=" + data.minZ() + ". Explore ou genere la carte avant le prochain essai.");
+        if (best != null) {
+            return new Search(best.pos,
+                "Site choisi aleatoirement parmi les chunks deja generes, sans utiliser la position des joueurs.");
         }
-        return new Search(null, "Aucun terrain naturel assez plat et eloigne des joueurs trouve dans la zone configuree. Nouvel essai bientot.");
+        return new Search(null, "Chunks generes trouves, mais aucun terrain naturel assez plat, libre et a plus de "
+            + (int)PLAYER_DISTANCE + " blocs des joueurs. La recherche sera relancee.");
+    }
+
+    /**
+     * Enumerate existing Overworld region files and randomly sample their chunk
+     * coordinates. Region files can contain empty slots; chunkExistsOnDisk filters
+     * those without causing generation.
+     */
+    private static List<ChunkPos> listGeneratedChunks(ServerLevel level, DungeonData data) {
+        List<ChunkPos> result = new ArrayList<>();
+        Path regionDir = level.getServer().getWorldPath(LevelResource.ROOT).resolve("region");
+        if (!Files.isDirectory(regionDir)) return result;
+        int minRegionX = Math.floorDiv(data.minX(), 512);
+        int minRegionZ = Math.floorDiv(data.minZ(), 512);
+        int maxRegionX = Math.floorDiv((int)Math.floor(level.getWorldBorder().getMaxX()), 512);
+        int maxRegionZ = Math.floorDiv((int)Math.floor(level.getWorldBorder().getMaxZ()), 512);
+        try (Stream<Path> files = Files.list(regionDir)) {
+            files.filter(path -> path.getFileName().toString().matches("r.-?\\d+.-?\\d+\\.mca"))
+                .forEach(path -> {
+                    String[] parts = path.getFileName().toString().split("\\.");
+                    if (parts.length != 4) return;
+                    try {
+                        int rx = Integer.parseInt(parts[1]);
+                        int rz = Integer.parseInt(parts[2]);
+                        if (rx < minRegionX || rz < minRegionZ || rx > maxRegionX || rz > maxRegionZ) return;
+                        int baseX = rx * 32;
+                        int baseZ = rz * 32;
+                        // Probe a shuffled subset of slots in this region, rather than every possible world coordinate.
+                        List<Integer> slots = new ArrayList<>(1024);
+                        for (int slot = 0; slot < 1024; slot++) slots.add(slot);
+                        Collections.shuffle(slots, new java.util.Random(level.getRandom().nextLong()));
+                        int foundInRegion = 0;
+                        for (int slot : slots) {
+                            int cx = baseX + (slot & 31);
+                            int cz = baseZ + (slot >>> 5);
+                            int blockX = cx * 16 + 8;
+                            int blockZ = cz * 16 + 8;
+                            if (blockX < data.minX() + 8 || blockZ < data.minZ() + 8) continue;
+                            if (blockX < level.getWorldBorder().getMinX() + 32
+                                || blockX > level.getWorldBorder().getMaxX() - 32
+                                || blockZ < level.getWorldBorder().getMinZ() + 32
+                                || blockZ > level.getWorldBorder().getMaxZ() - 32) continue;
+                            ChunkPos pos = new ChunkPos(cx, cz);
+                            if (chunkExistsOnDisk(level, pos)) {
+                                result.add(pos);
+                                if (++foundInRegion >= 24) break;
+                            }
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Ignore malformed region file names.
+                    }
+                });
+        } catch (Exception ignored) {
+            return result;
+        }
+        return result;
     }
 
     /** Manual scan around an administrator. */
