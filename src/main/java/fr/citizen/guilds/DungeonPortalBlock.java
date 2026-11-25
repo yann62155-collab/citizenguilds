@@ -94,10 +94,11 @@ public final class DungeonPortalBlock extends Block {
                 return;
             }
             DungeonData data = DungeonData.get(player.getServer());
-            if (!data.hasPlacedPortal() || !touchedPos.offset(
-                    -Math.floorMod(touchedPos.getX() - data.lastSite().getX(), 3),
-                    -Math.floorMod(touchedPos.getY() - data.lastSite().getY(), 3), 0)
-                    .closerThan(data.lastSite(), 3.0D)) {
+            BlockPos activeGate = data.lastSite();
+            if (!data.hasPlacedPortal() || activeGate == null
+                    || Math.abs(touchedPos.getX() - activeGate.getX()) > 1
+                    || Math.abs(touchedPos.getY() - activeGate.getY()) > 1
+                    || touchedPos.getZ() != activeGate.getZ()) {
                 // The saved portal site is authoritative; stale gate blocks cannot start a session.
                 if (player.tickCount % 20 == 0) player.sendSystemMessage(Component.literal(
                     "§c[Donjon] Cette porte n'est plus active."));
