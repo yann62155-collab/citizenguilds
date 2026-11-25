@@ -135,8 +135,8 @@ public final class DungeonSiteFinder {
                                 if (++foundInRegion >= 24) break;
                             }
                         }
-                    } catch (NumberFormatException ignored) {
-                        // Ignore malformed region file names.
+                    } catch (NumberFormatException | java.io.IOException ignored) {
+                        // Ignore malformed region file names or unreadable region headers.
                     }
                 });
         } catch (Exception ignored) {
