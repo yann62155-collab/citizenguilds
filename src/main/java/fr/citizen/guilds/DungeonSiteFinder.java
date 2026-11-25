@@ -34,44 +34,49 @@ public final class DungeonSiteFinder {
 
     private record Candidate(BlockPos pos, int score) {}
 
-    /** Automatic search (used by the timer and by /guild dungeon spawnnow). */
+    /**
+     * Random search over the configured map zone. Player positions are never used
+     * as search origins; only the minimum X/Y/Z limits and existing world terrain matter.
+     */
     public static Search findAuto(ServerLevel level, DungeonData data) {
         RandomSource random = level.getRandom();
-        List<ServerPlayer> anchors = new ArrayList<>();
-        for (ServerPlayer player : level.players()) {
-            if (player.isSpectator()) continue;
-            BlockPos p = player.blockPosition();
-            if (p.getX() >= data.minX() - 160 && p.getZ() >= data.minZ() - 160) anchors.add(player);
-        }
-        Collections.shuffle(anchors, new java.util.Random(random.nextLong()));
         Candidate best = null;
-        int anchorsUsed = 0;
-        for (ServerPlayer anchor : anchors) {
-            if (anchorsUsed++ >= 4) break;
-            best = better(best, searchAround(level, data, anchor.getBlockX(), anchor.getBlockZ(), 48, 160, 220, null));
-            if (best != null && best.score >= 2) return new Search(best.pos, "Site trouve pres d'un joueur.");
-        }
-        if (best != null) return new Search(best.pos, "Site trouve pres d'un joueur.");
-
         int existingChunks = 0;
-        for (int attempt = 0; attempt < 3; attempt++) {
+        final int mapAttempts = 24;
+
+        for (int attempt = 0; attempt < mapAttempts; attempt++) {
             int x = data.minX() + 32 + random.nextInt(REMOTE_SPAN);
             int z = data.minZ() + 32 + random.nextInt(REMOTE_SPAN);
-            if (!level.getWorldBorder().isWithinBounds(new BlockPos(x, 0, z))) continue;
-            ChunkPos center = new ChunkPos(new BlockPos(x, 0, z));
+            BlockPos probe = new BlockPos(x, level.getMinBuildHeight(), z);
+            if (!level.getWorldBorder().isWithinBounds(probe)) continue;
+
+            ChunkPos center = new ChunkPos(probe);
             if (!chunkExistsOnDisk(level, center)) continue;
             existingChunks++;
-            for (int cx = -1; cx <= 1; cx++) for (int cz = -1; cz <= 1; cz++) {
-                ChunkPos around = new ChunkPos(center.x + cx, center.z + cz);
-                if (level.hasChunk(around.x, around.z) || chunkExistsOnDisk(level, around)) level.getChunk(around.x, around.z);
+
+            // Load only chunks already present on disk; never generate a new region just to place a portal.
+            for (int cx = -1; cx <= 1; cx++) {
+                for (int cz = -1; cz <= 1; cz++) {
+                    ChunkPos around = new ChunkPos(center.x + cx, center.z + cz);
+                    if (chunkExistsOnDisk(level, around)) level.getChunk(around.x, around.z);
+                }
             }
-            best = better(best, searchAround(level, data, center.getMiddleBlockX(), center.getMiddleBlockZ(), 0, 10, 60, null));
-            if (best != null && best.score >= 2) break;
+
+            Candidate candidate = searchAround(level, data, center.getMiddleBlockX(),
+                center.getMiddleBlockZ(), 0, 112, 180, null);
+            best = better(best, candidate);
+            if (best != null && best.score >= 3) {
+                return new Search(best.pos, "Site aleatoire trouve dans la zone configuree, independamment des joueurs.");
+            }
         }
-        if (best != null) return new Search(best.pos, "Site trouve dans la zone des donjons (sans joueur a proximite).");
-        if (anchors.isEmpty() && existingChunks == 0)
-            return new Search(null, "Aucun joueur dans la zone (X>=" + data.minX() + ", Z>=" + data.minZ() + ") et aucun terrain deja genere trouve au hasard. Nouvel essai bientot.");
-        return new Search(null, "Aucun terrain assez plat et naturel trouve cette fois (" + anchors.size() + " joueur(s) dans la zone). Nouvel essai bientot.");
+
+        if (best != null) return new Search(best.pos,
+            "Site aleatoire trouve dans la zone configuree, independamment des joueurs.");
+        if (existingChunks == 0) {
+            return new Search(null, "Aucun chunk deja genere trouve dans la zone X>=" + data.minX()
+                + ", Z>=" + data.minZ() + ". Explore ou genere cette zone avant le prochain essai.");
+        }
+        return new Search(null, "Aucun terrain naturel assez plat et eloigne des joueurs trouve dans la zone configuree. Nouvel essai bientot.");
     }
 
     /** Manual scan around an administrator. */
