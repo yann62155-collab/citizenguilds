@@ -24,8 +24,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
  *     (the chunks are loaded, never generated), so the portal can appear even when nobody is nearby.
  */
 public final class DungeonSiteFinder {
-    /** Width of the random area explored past the minimum coordinates when nobody is in the zone. */
-    private static final int REMOTE_SPAN = 1500;
     private static final double PLAYER_DISTANCE = 40.0D;
 
     private DungeonSiteFinder() {}
@@ -42,11 +40,20 @@ public final class DungeonSiteFinder {
         RandomSource random = level.getRandom();
         Candidate best = null;
         int existingChunks = 0;
-        final int mapAttempts = 64;
+        // Sample the entire usable Overworld border, not a small square around an admin
+        // or a fixed 1500-block patch. The configured coordinates are lower bounds only.
+        final int mapAttempts = 192;
+        final double minX = Math.max(data.minX() + 32.0D, level.getWorldBorder().getMinX() + 32.0D);
+        final double minZ = Math.max(data.minZ() + 32.0D, level.getWorldBorder().getMinZ() + 32.0D);
+        final double maxX = level.getWorldBorder().getMaxX() - 32.0D;
+        final double maxZ = level.getWorldBorder().getMaxZ() - 32.0D;
+        if (minX >= maxX || minZ >= maxZ) {
+            return new Search(null, "Les coordonnees minimales depassent les limites de la carte.");
+        }
 
         for (int attempt = 0; attempt < mapAttempts; attempt++) {
-            int x = data.minX() + 32 + random.nextInt(REMOTE_SPAN);
-            int z = data.minZ() + 32 + random.nextInt(REMOTE_SPAN);
+            int x = (int)Math.floor(minX + random.nextDouble() * (maxX - minX));
+            int z = (int)Math.floor(minZ + random.nextDouble() * (maxZ - minZ));
             BlockPos probe = new BlockPos(x, level.getMinBuildHeight(), z);
             if (!level.getWorldBorder().isWithinBounds(probe)) continue;
 
@@ -78,15 +85,15 @@ public final class DungeonSiteFinder {
                 center.getMiddleBlockZ(), 0, 112, 320, null);
             best = better(best, candidate);
             if (best != null && best.score >= 3) {
-                return new Search(best.pos, "Site aleatoire trouve dans la zone configuree, independamment des joueurs.");
+                return new Search(best.pos, "Site aleatoire trouve n'importe ou dans les limites de la carte, au-dela des coordonnees minimales.");
             }
         }
 
         if (best != null) return new Search(best.pos,
-            "Site aleatoire trouve dans la zone configuree, independamment des joueurs.");
+            "Site aleatoire trouve n'importe ou dans les limites de la carte, au-dela des coordonnees minimales.");
         if (existingChunks == 0) {
-            return new Search(null, "Aucun chunk deja genere trouve dans la zone X>=" + data.minX()
-                + ", Z>=" + data.minZ() + ". Explore ou genere cette zone avant le prochain essai.");
+            return new Search(null, "Aucun chunk deja genere trouve dans la carte au-dela de X>=" + data.minX()
+                + ", Z>=" + data.minZ() + ". Explore ou genere la carte avant le prochain essai.");
         }
         return new Search(null, "Aucun terrain naturel assez plat et eloigne des joueurs trouve dans la zone configuree. Nouvel essai bientot.");
     }
