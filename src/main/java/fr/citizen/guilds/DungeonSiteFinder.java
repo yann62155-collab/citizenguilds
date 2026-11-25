@@ -42,7 +42,7 @@ public final class DungeonSiteFinder {
         RandomSource random = level.getRandom();
         Candidate best = null;
         int existingChunks = 0;
-        final int mapAttempts = 24;
+        final int mapAttempts = 64;
 
         for (int attempt = 0; attempt < mapAttempts; attempt++) {
             int x = data.minX() + 32 + random.nextInt(REMOTE_SPAN);
@@ -75,7 +75,7 @@ public final class DungeonSiteFinder {
             if (!footprintReady) continue;
 
             Candidate candidate = searchAround(level, data, center.getMiddleBlockX(),
-                center.getMiddleBlockZ(), 0, 112, 180, null);
+                center.getMiddleBlockZ(), 0, 112, 320, null);
             best = better(best, candidate);
             if (best != null && best.score >= 3) {
                 return new Search(best.pos, "Site aleatoire trouve dans la zone configuree, independamment des joueurs.");
@@ -149,14 +149,19 @@ public final class DungeonSiteFinder {
         return state.canBeReplaced() && state.getFluidState().isEmpty();
     }
 
-    /** The 5 blocks under the monument must be level, the 7x7 area around it natural and roughly flat. */
+    /**
+     * The portal's central 3-wide footing must be level. Its surrounding 5x5
+     * clearance may follow gentle terrain (up to 3 blocks of relief), avoiding
+     * the old overly strict 7x7 perfectly-natural plateau requirement.
+     */
     private static boolean flatNaturalArea(ServerLevel level, int x, int y, int z) {
-        for (int dx = -3; dx <= 3; dx++) {
-            for (int dz = -3; dz <= 3; dz++) {
-                if (!level.hasChunkAt(new BlockPos(x + dx, level.getMinBuildHeight(), z + dz))) return false;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                BlockPos column = new BlockPos(x + dx, level.getMinBuildHeight(), z + dz);
+                if (!level.hasChunkAt(column)) return false;
                 int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + dx, z + dz);
-                boolean underMonument = dz == 0 && Math.abs(dx) <= 2;
-                if (underMonument ? h != y : Math.abs(h - y) > 2) return false;
+                boolean footing = dz == 0 && Math.abs(dx) <= 1;
+                if (footing ? h != y : Math.abs(h - y) > 3) return false;
                 BlockState ground = level.getBlockState(new BlockPos(x + dx, h - 1, z + dz));
                 if (!isNaturalGround(ground)) return false;
             }
